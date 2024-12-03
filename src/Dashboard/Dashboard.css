@@ -1,0 +1,298 @@
+/* Reset and Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  --sb-width: 5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #333;
+  background-color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+body.sb-expanded {
+  --sb-width: 12.5rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Dashboard Wrapper */
+.dashboard-wrapper {
+  display: flex;
+  width: 100%; /* Ensure the dashboard wrapper covers the full width */
+}
+
+/* Sidebar Styles */
+aside {
+  position: fixed;
+  inset: 0 auto 0 0;
+  padding: 1rem;
+  width: var(--sb-width);
+  background-image: linear-gradient(#90c3fd, #ba71ff, #ff71b8);
+  opacity: 0.75; /* Opacity for sidebar background */
+  transition: width 0.5s ease-in-out;
+  height: 100%; /* Full height for sidebar */
+}
+
+/* Navigation Styles */
+nav {
+  margin-top: 0; /* Adjust as needed for navbar height */
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+}
+
+nav a.active,
+nav a:hover,
+nav a:focus-visible {
+  outline: none;
+  color: #b366fc;
+  background-color: #fff;
+}
+
+nav a span {
+  font-size: 0.875rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+.sb-expanded nav a span {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Main Content Styles */
+.main-content {
+  flex-grow: 1; /* Allow main content to take up remaining space */
+  margin-left: var(--sb-width); /* Keep margin left for sidebar */
+  margin-top: 200px; /* Adjust this value based on your navbar height */
+  padding: 1rem 2rem;
+  background-color: #f9f9f9; /* Light background */
+  transition: margin-left 0.5s ease-in-out, background-color 0.3s ease; /* Add transition for smooth effect */
+}
+
+body.dark-theme .main-content {
+  background-color: #1e1e1e; /* Dark background for main content */
+}
+
+/* Navbar Styles */
+.navbar {
+  position: fixed; /* Fix navbar position */
+  top: 0; /* Align to top */
+  left: var(--sb-width); /* Position next to the sidebar */
+  right: 0; /* Stretch to the right */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10; /* Ensure it stays above other content */
+  transition: left 0.5s ease-in-out; /* Smooth transition for left property */
+}
+
+.navbar.sb-expanded {
+  left: 12.5rem; /* Adjust based on sidebar width when expanded */
+}
+
+/* User Info Styles */
+.nav-user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 1rem;
+}
+
+/* Logout Button Styles */
+.logout-btn {
+  padding: 0.5rem 1rem;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+ }
+
+.logout-btn:hover {
+  background-color: #ff1a1a;
+}
+
+/* Profile Menu Styles */
+.profile-menu {
+  position: absolute;
+  right: 10px; /* Adjust according to your layout */
+  top: 60px; /* Position below the navbar */
+  background-color: #ffffff; /* White background */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Softer shadow */
+  z-index: 1000;
+  width: 180px; /* Set a width for the menu */
+  border: 1px solid #e0e0e0; /* Light gray border */
+  overflow: hidden; /* Hide overflow */
+}
+
+.profile-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.profile-menu li {
+  padding: 12px 16px; /* Increased padding for better spacing */
+  transition: background-color 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.profile-menu li:hover {
+  background-color: #f7f7f7; /* Light gray on hover */
+}
+
+.profile-menu a,
+.profile-menu button {
+  text-decoration: none;
+  color: #333; /* Darker text color */
+  width: 100%;
+  display: block; /* Make the entire area clickable */
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.profile-menu button {
+  color: #d9534f; /* Bootstrap red for logout */
+  font-weight: bold; /* Bold text for emphasis */
+}
+
+.profile-menu button:hover {
+  text-decoration: underline; /* Underline on hover */
+}
+
+/* Dark Theme Styles */
+body.dark-theme {
+  background-color: #121212; /* Dark background */
+  color: #ffffff; /* Light text color */
+}
+
+body.dark-theme aside {
+  background-color: #1e1e1e; /* Dark sidebar background */
+  background-image: none; /* Remove gradient background */
+}
+
+body.dark-theme .navbar {
+  background-color: #1e1e1e; /* Dark navbar background */
+}
+
+body.dark-theme .profile-menu {
+  background-color: #2a2a2a; /* Dark profile menu background */
+  border: 1px solid #444; /* Darker border */
+}
+
+body.dark-theme .nav-user-info .user-photo {
+  border: 2px solid #666; /* Dark theme user photo border */
+}
+
+body.dark-theme .profile-menu ul li a {
+  color: #fff; /* Dark theme profile menu link color */
+}
+
+body.dark-theme .placeholder {
+  background-color: #333; /* Dark theme placeholder background color */
+}
+
+/* Placeholder Styles */
+.placeholder {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.625rem;
+  min-height: 600px;
+}
+
+.placeholder > div {
+  background-color: rgb(238, 238, 252);
+  border-radius: 0.375rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+  .dashboard-wrapper {
+    flex-direction: column; /* Stack sidebar and content vertically */
+  }
+
+  aside {
+    width: 100%; /* Full width for sidebar */
+    position: relative; /* Make sidebar relative to parent */
+  }
+
+  .main-content {
+    margin-left: 0; /* No margin for main content */
+  }
+
+  .navbar {
+    left: 0; /* Align navbar to full width */
+  }
+}
+
+@media (max-width: 768px) {
+  nav a {
+    font-size: 1rem; /* Smaller font size for nav links */
+  }
+
+  .user-photo {
+    width: 30px; /* Smaller user photo */
+    height: 30px;
+  }
+
+  .logout-btn {
+    padding: 0.25rem 0.5rem; /* Smaller logout button */
+  }
+
+  h1 {
+    font-size: 1.25rem; /* Smaller heading */
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.1rem; /* Even smaller heading */
+  }
+
+  nav a {
+    padding: 0.5rem 0.625rem; /* Adjust padding for small screens */
+  }
+
+  .placeholder {
+    grid-template-columns: 1fr; /* Single column layout */
+  }
+}

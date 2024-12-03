@@ -1,0 +1,70 @@
+/* Projects.css */
+
+.project-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+  }
+  
+  .project-form h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .project-form input[type="text"],
+  .project-form textarea,
+  .project-form select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .project-form textarea {
+    resize: vertical; /* Allow vertical resizing */
+    min-height: 100px; /* Minimum height for the textarea */
+  }
+  
+  .file-upload {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .file-upload input[type="file"] {
+    flex: 1;
+    margin-right: 10px; /* Space between file inputs */
+  }
+  
+  .project-form button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .project-form button:disabled {
+    background-color: #ccc; /* Gray when loading */
+    cursor: not-allowed;
+  }
+  
+  .project-form button:hover:not(:disabled) {
+    background-color: #45a049; /* Darker green on hover */
+  }
+  
+  .message {
+    text-align: center;
+    margin-top: 15px;
+    color: #d9534f; /* Bootstrap danger color */
+  }
