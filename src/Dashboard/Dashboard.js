@@ -1,11 +1,13 @@
+// src/components/Dashboard.js
 import React, { useState, useEffect } from 'react';
-import { auth } from '../FirebaseConfig'; // Ensure the correct path
+import { auth } from '../FirebaseConfig'; 
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../ThemeProvider'; // Import the useTheme hook
-import './Dashboard.css'; // Import the CSS file for styling
+import { useTheme } from '../ThemeProvider'; 
+import Sidebar from '../components/Sidebar'; 
+import Navbar from '../components/NavBar'; 
+import './Dashboard.css'; 
 
 const Dashboard = ({ user }) => {
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
   const { isDarkTheme, toggleTheme } = useTheme(); // Use the theme context
@@ -18,10 +20,6 @@ const Dashboard = ({ user }) => {
       alert('Error signing out. Please try again.'); // User-friendly error message
       console.error('Error signing out:', error.message);
     }
-  };
-
-  const toggleProfileMenu = () => {
-    setShowProfileMenu(prevState => !prevState);
   };
 
   const toggleSidebar = (e) => {
@@ -44,95 +42,13 @@ const Dashboard = ({ user }) => {
 
   return (
     <div className={`dashboard-wrapper ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'} ${isDarkTheme ? 'dark-theme' : 'light-theme'}`}>
-      <aside className={`sidebar ${isSidebarOpen ? 'expanded' : 'collapsed'}`}>
-        <nav>
-          <ul>
-            <li>
-              <a href="/dashboard" className="active">
-                <i className="bx bx-home-circle"></i>
-                <span>Dashboard</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">
-                <i className="bx bx-grid-alt"></i>
-                <span>Sources</span>
-              </a>
-            </li>
-            <li>
-              <a href="/projects">
-                <i className="bx bx-carousel"></i>
-                <span>Projects</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">
-                <i className="bx bx-collection"></i>
-                <span>Colab</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">
-                <i className="bx bx-cloud-download"></i>
-                <span>Approval Requests</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">
-                <i className="bx bx-chat"></i>
-                <span>Community</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">
-                <i className="bx bx-cog"></i>
-                <span>Account</span>
-              </a>
-            </li>
-            <li>
-              <a href="/" data-resize-btn onClick={toggleSidebar}>
-                <i className="bx bx-chevrons-right"></i>
-                <span>{isSidebarOpen ? 'Collapse' : 'Expand'}</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-
+      <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <div className="main-content">
-        <nav className="navbar">
-          <div className="nav-logo">
-            <h2>SynCodeX</h2>
-          </div>
-          <div className="nav-user-info">
-            <img 
-              className="user-photo" 
-              src={user.photoURL} 
-              alt="User " 
-              referrerPolicy="no-referrer" 
-              onClick={toggleProfileMenu} 
-            />
-            {showProfileMenu && (
-              <div className="profile-menu">
-                <ul>
-                  <li><a href="/profile">Profile Info</a></li>
-                  <li><a href="/settings">Settings</a></li>
-                  <li>
-                    <button onClick={toggleTheme}>
-                      {isDarkTheme ? 'Light Theme' : 'Dark Theme'}
-                    </button>
-                  </li>
-                  <li><button onClick={handleLogout}>Logout</button></li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </nav>
-
+        <Navbar user={user} toggleTheme={toggleTheme} isDarkTheme={isDarkTheme} handleLogout={handleLogout} />
         <main>
           <h1>Welcome to your Dashboard, {user.displayName}!</h1>
           <p>
-            Here you can analyze the state of your project and interact with your team members.  You can also access your project's settings and user information.   Please explore the menu to the left to learn more.
+            Here you can analyze the state of your project and interact with your team members. You can also access your project's settings and user information. Please explore the menu to the left to learn more.
           </p>
 
           <div className="placeholder">
