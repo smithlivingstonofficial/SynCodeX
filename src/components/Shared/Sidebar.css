@@ -1,0 +1,103 @@
+/* Sidebar Styles */
+.sidebar {
+  position: fixed;
+  top: 50px; /* Sidebar starts below the Navbar */
+  left: 0;
+  height: calc(100vh - 64px); /* Sidebar height adjusts based on Navbar */
+  width: 250px;
+  background-color: var(--sidebar-bg);
+  color: var(--text-color);
+  transition: width 0.3s ease, background-color 0.3s ease;
+  z-index: 999; /* Ensure Sidebar is below Navbar */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.menu {
+  list-style: none;
+  padding: 20px 0;
+  width: 100%;
+}
+
+.menu-item {
+  padding: 15px 20px;
+  text-align: left;
+  position: relative;
+  cursor: pointer;
+}
+
+.menu-item span {
+  display: inline-block;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar.collapsed .menu-item span {
+  opacity: 0;
+}
+
+.menu-item.active {
+  border-left: 4px solid transparent;
+  animation: border-gradient 3s infinite;
+}
+
+.menu-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(90deg, #ff6b6b, #f3a683, #f9ca24, #60a3bc, #546de5);
+  background-size: 300% 100%;
+  animation: gradient-move 3s infinite;
+}
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Collapse Button */
+.collapse-button {
+  margin: auto 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.collapse-button:hover {
+  transform: scale(1.1);
+  background-color: var(--button-hover-bg);
+}
+
+/* Sidebar Collapse Button in Center */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sidebar.collapsed .collapse-button {
+  margin: auto;
+}

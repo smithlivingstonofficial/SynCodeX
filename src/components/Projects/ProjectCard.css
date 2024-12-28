@@ -1,0 +1,81 @@
+/* Grid Layout for Home Page */
+.project-grid {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping to the next row if necessary */
+    gap: 16px; /* Space between cards */
+    justify-content: center; /* Center the cards horizontally */
+    padding: 16px;
+    max-width: 1200px; /* Adjust container width as needed */
+    margin: 0 auto; /* Center the container */
+  }
+  
+  .project-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    width: 200px; /* Fixed width for cards */
+  }
+  
+  .project-card:hover {
+    transform: scale(1.01);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .project-card-thumbnail {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  
+  .project-card-details {
+    padding: 16px;
+  }
+  
+  .project-card-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+  }
+  
+  .project-card-description {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 16px;
+  }
+  
+  .project-card-channel {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .project-card-channel-image {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  
+  .project-card-channel-name {
+    font-size: 1em;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .project-card-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    color: #777;
+  }
+  
+  .project-card-likes {
+    color: #e74c3c;
+  }
+  

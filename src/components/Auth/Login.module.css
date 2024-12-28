@@ -1,0 +1,47 @@
+/* Login.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 300px; /* Adjust width as needed */
+  padding: 20px;
+  margin: auto; /* Center the container */
+  border: 1px solid #ccc; /* Border around the container */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  background-color: #f9f9f9; /* Light background color */
+}
+
+h1 {
+  margin-bottom: 20px; /* Space between title and buttons */
+  font-size: 24px; /* Font size for the title */
+}
+
+/* New styles for button container */
+.buttonContainer {
+  display: flex; /* Use flexbox for horizontal alignment */
+  justify-content: space-between; /* Space buttons evenly */
+  width: 100%; /* Full width of the container */
+}
+
+.button {
+  margin: 0 5px; /* Space between buttons */
+  width: 60px; /* Width of the square button */
+  height: 60px; /* Height of the square button */
+  border: none; /* Remove default border */
+  border-radius: 5px; /* Rounded corners for buttons */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: transform 0.3s; /* Smooth transition for hover effect */
+  background-color: transparent; /* Transparent background */
+}
+
+.button:hover {
+  transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.logo {
+  width: 100%; /* Make logo fill the button */
+  height: 100%; /* Make logo fill the button */
+}

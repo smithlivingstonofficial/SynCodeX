@@ -1,0 +1,138 @@
+/* Navbar Container */
+.navbar-container {
+  position: relative;
+  width: 100%;
+  background-color: #fff;
+  border-bottom: 1px solid #ccc;
+  z-index: 1000;
+}
+
+.navbar-container.dark-mode {
+  background-color: #121212;
+  border-color: #333;
+}
+
+/* Multi-Color Separator */
+.multi-color-separator {
+  height: 4px;
+  background: linear-gradient(90deg, red, orange, yellow, green, blue, purple);
+  animation: move 3s linear infinite;
+}
+
+@keyframes move {
+  0% {
+    background-position: 0;
+  }
+  100% {
+    background-position: 100%;
+  }
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.navbar-logo {
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #333;
+}
+
+.navbar-logo:hover {
+  color: #555;
+}
+
+.navbar-container.dark-mode .navbar-logo {
+  color: #fff;
+}
+
+/* Right Section */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Upload Button */
+.upload-button {
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-button:hover {
+  background-color: #0056b3;
+}
+
+.navbar-container.dark-mode .upload-button {
+  background-color: #7e7e7e;
+}
+
+.navbar-container.dark-mode .upload-button:hover {
+  background-color: #535353;
+}
+
+/* Profile Container */
+.profile-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-picture {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ccc;
+}
+
+.navbar-container.dark-mode .profile-picture {
+  border-color: #555;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  min-width: 150px;
+}
+
+.dropdown-menu p {
+  margin: 0;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.dropdown-menu p:hover {
+  background-color: #f0f0f0;
+}
+
+.navbar-container.dark-mode .dropdown-menu {
+  background-color: #333;
+  border-color: #555;
+}
+
+.navbar-container.dark-mode .dropdown-menu p {
+  color: #fff;
+}
+
+.navbar-container.dark-mode .dropdown-menu p:hover {
+  background-color: #444;
+}
