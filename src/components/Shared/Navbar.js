@@ -39,7 +39,8 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
             className="upload-button"
             onClick={() => navigate("/upload")}
           >
-            Upload Project
+          <img src="assets/icons/upload.png" className="upload-icon"/>  
+            Upload
           </button>
           {user && (
             <div className="profile-container" onClick={toggleDropdown}>

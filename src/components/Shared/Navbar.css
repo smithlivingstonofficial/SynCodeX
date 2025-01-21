@@ -5,6 +5,7 @@
   background-color: #fff;
   border-bottom: 1px solid #ccc;
   z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-container.dark-mode {
@@ -15,16 +16,17 @@
 /* Multi-Color Separator */
 .multi-color-separator {
   height: 4px;
-  background: linear-gradient(90deg, red, orange, yellow, green, blue, purple);
+  background: linear-gradient(45deg, red, orange, yellow, green, blue, purple);
+  background-size: 600% 100%;
   animation: move 3s linear infinite;
 }
 
 @keyframes move {
   0% {
-    background-position: 0;
+    background-position: 0% 50%;
   }
   100% {
-    background-position: 100%;
+    background-position: 100% 50%;
   }
 }
 
@@ -33,18 +35,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
+  padding: 1px 20px; /* Reduced padding */
 }
 
 .navbar-logo {
-  font-size: 24px;
+  font-size: 20px; /* Reduced font size */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: bold;
   cursor: pointer;
   color: #333;
+  transition: color 0.3s, transform 0.3s;
 }
 
 .navbar-logo:hover {
-  color: #555;
+  color: #007bff;
+  transform: scale(1.1) rotate(-5deg); /* Slightly enlarge and rotate on hover */
 }
 
 .navbar-container.dark-mode .navbar-logo {
@@ -55,18 +60,24 @@
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px; /* Reduced gap */
 }
 
 /* Upload Button */
 .upload-button {
-  padding: 8px 15px;
+  padding: 5px 10px; /* Reduced padding */
   background-color: #007bff;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 15px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px; /* Reduced font size */
+  transition: background-color 0.3s;
+}
+
+.upload-icon{
+  width: 15px;
+  margin-right: 8px;
 }
 
 .upload-button:hover {
@@ -88,11 +99,12 @@
 }
 
 .profile-picture {
-  width: 40px;
-  height: 40px;
+  width: 30px; /* Reduced size */
+  height: 30px; /* Reduced size */
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #ccc;
+  transition: border-color 0.3s;
 }
 
 .navbar-container.dark-mode .profile-picture {
@@ -102,7 +114,7 @@
 /* Dropdown Menu */
 .dropdown-menu {
   position: absolute;
-  top: 50px;
+  top: 40px; /* Adjusted for reduced profile picture size */
   right: 0;
   background-color: #fff;
   border: 1px solid #ccc;
@@ -110,6 +122,16 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 100;
   min-width: 150px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+}
+
+.profile-container:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .dropdown-menu p {
@@ -118,6 +140,7 @@
   cursor: pointer;
   font-size: 14px;
   color: #333;
+  transition: background-color 0.3s;
 }
 
 .dropdown-menu p:hover {

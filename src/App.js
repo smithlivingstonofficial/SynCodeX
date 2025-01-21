@@ -10,6 +10,7 @@ import ProjectPage from "./components/Projects/ProjectPage";
 import EditProject from "./components/Projects/EditProject";
 import HomePage from "./components/Home/HomePage";
 import ProjectDetails from "./components/Home/ProjectDetails";
+import Collab from "./components/Collab/CollabCreation/CollabCreation"
 
 function App() {
   const [user, setUser] = useState(null); // State to manage the current user
@@ -55,6 +56,7 @@ function App() {
         <Route path="/projects" element={<DashboardLayout><ProjectPage /></DashboardLayout>} />
         <Route path="/edit-project/:projectId" element={<DashboardLayout><EditProject /></DashboardLayout>} />
         <Route path="/home" element={<DashboardLayout><HomePage /></DashboardLayout>} />
+        <Route path="/collab" element={<DashboardLayout><Collab /></DashboardLayout>} />
         <Route path="/project-details/:id" element={<DashboardLayout><ProjectDetails /></DashboardLayout>} />
         <Route path="/projects/:id" component={ProjectDetails} />
 

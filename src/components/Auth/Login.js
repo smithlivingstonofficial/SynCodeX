@@ -8,7 +8,7 @@ import {
   FacebookAuthProvider,
   OAuthProvider,
 } from "firebase/auth";
-import styles from "./Login.module.css"; // Import the CSS Module
+import styles from "./Login.module.css"; 
 
 const Login = () => {
   const navigate = useNavigate();
@@ -36,16 +36,16 @@ const Login = () => {
       <h1>Login to SynCodeX</h1>
       <div className={styles.buttonContainer}>
         <button className={styles.button} onClick={() => handleSignIn(googleProvider)}>
-          <img className={styles.logo} src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Google_Logo.svg" alt="Google Logo" />
+          <img className={styles.logo} src="assets/logo/google.png" alt="Google Logo" />
         </button>
         <button className={styles.button} onClick={() => handleSignIn(githubProvider)}>
-          <img className={styles.logo} src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" />
+          <img className={styles.logo} src="assets/logo/github.png" alt="GitHub Logo" />
         </button>
         <button className={styles.button} onClick={() => handleSignIn(facebookProvider)}>
-          <img className={styles.logo} src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt=" Facebook Logo" />
+          <img className={styles.logo} src="assets/logo/facebook.png" alt="Facebook Logo" />
         </button>
         <button className={styles.button} onClick={() => handleSignIn(microsoftProvider)}>
-          <img className={styles.logo} src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Microsoft_logo.svg" alt="Microsoft Logo" />
+          <img className={styles.logo} src="assets/logo/microsoft.png" alt="Microsoft Logo" />
         </button>
       </div>
     </div>
