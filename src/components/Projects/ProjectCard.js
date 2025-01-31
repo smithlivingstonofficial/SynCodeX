@@ -1,8 +1,24 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // To navigate to the project details page
+import { getFirestore, doc, getDoc } from "firebase/firestore"; // Firestore imports
 
 const ProjectCard = ({ project }) => {
   const navigate = useNavigate();
+  const [thumbnailURL, setThumbnailURL] = useState("/default-thumbnail.jpg"); // Default thumbnail
+
+  useEffect(() => {
+    const fetchThumbnail = async () => {
+      const db = getFirestore();
+      const docRef = doc(db, "projects", project.id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setThumbnailURL(docSnap.data().thumbnailURL || "/default-thumbnail.jpg");
+      }
+    };
+
+    fetchThumbnail();
+  }, [project.id]);
 
   const handleClick = () => {
     navigate(`/project/${project.id}`); // Navigate to the Project Details page
@@ -12,7 +28,7 @@ const ProjectCard = ({ project }) => {
     <div className="project-card" onClick={handleClick}>
       <div className="project-card-thumbnail">
         <img
-          src={project.thumbnail || "/default-thumbnail.jpg"} // Thumbnail for the project
+          src={thumbnailURL} // Thumbnail for the project
           alt={project.title}
           className="project-thumbnail-image"
         />
@@ -24,10 +40,11 @@ const ProjectCard = ({ project }) => {
             alt="Channel Profile"
             className="channel-profile-image"
           />
-          <span className="channel-name">{project.channelName}</span> {/* Display channel name */}
+          <div className="project-details">
+            <h3 className="project-title">{project.title}</h3>
+            <span className="channel-name">{project.channelName}</span> {/* Display channel name */}
+          </div>
         </div>
-        <h3 className="project-title">{project.title}</h3>
-        <p className="project-description">{project.description}</p>
       </div>
     </div>
   );
