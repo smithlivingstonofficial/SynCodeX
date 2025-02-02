@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { db } from "../../firebase/config";
-import { collection, query, where, getDocs, doc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc as firestoreDoc, deleteDoc, getFirestore, getDoc } from "firebase/firestore"; // Rename doc to firestoreDoc
 import { useNavigate } from "react-router-dom";
 import "./ProjectPage.css";
 
@@ -21,10 +21,21 @@ const ProjectPage = () => {
       const q = query(collection(db, "projects"), where("ownerId", "==", user.uid));
       const querySnapshot = await getDocs(q);
 
-      const fetchedProjects = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const fetchedProjects = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const projectData = doc.data();
+          const db = getFirestore();
+          const docRef = firestoreDoc(db, "projects", doc.id); // Use firestoreDoc here
+          const docSnap = await getDoc(docRef);
+
+          return {
+            id: doc.id,
+            ...projectData,
+            thumbnailURL: docSnap.exists() ? docSnap.data().thumbnailURL || "/default-thumbnail.png" : "/default-thumbnail.png",
+          };
+        })
+      );
+
       setProjects(fetchedProjects);
       setIsLoading(false);
     };
@@ -35,7 +46,7 @@ const ProjectPage = () => {
   const handleDelete = async (projectId) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
       try {
-        await deleteDoc(doc(db, "projects", projectId));
+        await deleteDoc(firestoreDoc(db, "projects", projectId)); // Use firestoreDoc here
         setProjects(projects.filter((project) => project.id !== projectId));
         alert("Project deleted successfully.");
       } catch (error) {
@@ -61,7 +72,7 @@ const ProjectPage = () => {
           {projects.map((project) => (
             <div key={project.id} className="project-card">
               <img
-                src={project.thumbnail || "/default-thumbnail.png"}
+                src={project.thumbnailURL}
                 alt={project.title}
                 className="project-thumbnail"
               />

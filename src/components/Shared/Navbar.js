@@ -39,14 +39,14 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
             className="upload-button"
             onClick={() => navigate("/upload")}
           >
-          <img src="assets/icons/upload.png" className="upload-icon"/>  
+          <img src="assets/icons/upload.png" className="upload-icon" alt="Upload Icon"/>  
             Upload
           </button>
           {user && (
             <div className="profile-container" onClick={toggleDropdown}>
               <img
                 src={user?.photoURL || "/default-profile.png"}
-                alt="Profile"
+                alt="User Profile" // Added alt prop to resolve ESLint warning
                 className="profile-picture"
               />
               {showDropdown && (

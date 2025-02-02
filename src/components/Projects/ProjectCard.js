@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // To navigate to the project details page
-import { getFirestore, doc, getDoc } from "firebase/firestore"; // Firestore imports
+import { useNavigate } from "react-router-dom";
+import { getFirestore, doc as firestoreDoc, getDoc } from "firebase/firestore";
+import { Card, CardActionArea, CardContent, CardMedia, Typography, Avatar, Box } from '@mui/material'; // MUI imports
 
 const ProjectCard = ({ project }) => {
   const navigate = useNavigate();
-  const [thumbnailURL, setThumbnailURL] = useState("/default-thumbnail.jpg"); // Default thumbnail
+  const [thumbnailURL, setThumbnailURL] = useState("/default-thumbnail.jpg");
 
   useEffect(() => {
     const fetchThumbnail = async () => {
       const db = getFirestore();
-      const docRef = doc(db, "projects", project.id);
+      const docRef = firestoreDoc(db, "projects", project.id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -21,32 +22,33 @@ const ProjectCard = ({ project }) => {
   }, [project.id]);
 
   const handleClick = () => {
-    navigate(`/project/${project.id}`); // Navigate to the Project Details page
+    navigate(`/project/${project.id}`);
   };
 
   return (
-    <div className="project-card" onClick={handleClick}>
-      <div className="project-card-thumbnail">
-        <img
-          src={thumbnailURL} // Thumbnail for the project
+    <Card onClick={handleClick} sx={{ maxWidth: 345 }}>
+      <CardActionArea>
+        <CardMedia
+          component="img"
+          height="140"
+          image={thumbnailURL}
           alt={project.title}
-          className="project-thumbnail-image"
         />
-      </div>
-      <div className="project-card-content">
-        <div className="project-channel-info">
-          <img
-            src={project.profilePicture || "/default-profile.png"} // Display profile picture
-            alt="Channel Profile"
-            className="channel-profile-image"
-          />
-          <div className="project-details">
-            <h3 className="project-title">{project.title}</h3>
-            <span className="channel-name">{project.channelName}</span> {/* Display channel name */}
-          </div>
-        </div>
-      </div>
-    </div>
+        <CardContent>
+          <Box display="flex" alignItems="center">
+            <Avatar src={project.profilePicture || "/default-profile.png"} alt="Channel Profile" />
+            <Box ml={2}>
+              <Typography variant="h6" component="div">
+                {project.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {project.channelName}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </CardActionArea>
+    </Card>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaHome, FaTachometerAlt, FaProjectDiagram, FaUsers, FaChartLine, FaCog, FaAngleLeft, FaAngleRight } from "react-icons/fa"; // Import icons
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -7,12 +8,12 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { name: "Home", path: "/home" },
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Projects", path: "/projects" },
-    { name: "Collab", path: "/Collab" },    
-    { name: "Analytics", path: "/analytics" },
-    { name: "Settings", path: "/settings" },
+    { name: "Home", path: "/home", icon: <FaHome /> },
+    { name: "Dashboard", path: "/dashboard", icon: <FaTachometerAlt /> },
+    { name: "Projects", path: "/projects", icon: <FaProjectDiagram /> },
+    { name: "Collab", path: "/Collab", icon: <FaUsers /> },
+    { name: "Analytics", path: "/analytics", icon: <FaChartLine /> },
+    { name: "Settings", path: "/settings", icon: <FaCog /> },
   ];
 
   const handleCollapse = () => {
@@ -30,12 +31,12 @@ const Sidebar = () => {
             }`}
             onClick={() => navigate(item.path)}
           >
-            <span>{item.name}</span>
+            {item.icon} <span>{item.name}</span>
           </li>
         ))}
       </ul>
       <button className="collapse-button" onClick={handleCollapse}>
-        {collapsed ? ">" : "<"}
+        {collapsed ? <FaAngleRight /> : <FaAngleLeft />}
       </button>
     </div>
   );

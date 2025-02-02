@@ -10,7 +10,9 @@ import ProjectPage from "./components/Projects/ProjectPage";
 import EditProject from "./components/Projects/EditProject";
 import HomePage from "./components/Home/HomePage";
 import ProjectDetails from "./components/Home/ProjectDetails";
-import Collab from "./components/Collab/CollabCreation/CollabCreation"
+import Collab from "./components/Collab/CollabCreation/CollabCreation";
+import Sidebar from "./components/Shared/Sidebar";
+import ViewProject from "./components/Home/ViewProject";
 
 function App() {
   const [user, setUser] = useState(null); // State to manage the current user
@@ -36,6 +38,7 @@ function App() {
 
   return (
     <Router>
+      <Sidebar />
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<Login />} />
@@ -59,7 +62,7 @@ function App() {
         <Route path="/collab" element={<DashboardLayout><Collab /></DashboardLayout>} />
         <Route path="/project-details/:id" element={<DashboardLayout><ProjectDetails /></DashboardLayout>} />
         <Route path="/projects/:id" component={ProjectDetails} />
-
+        <Route path="/project/:projectId" element={<ViewProject />} />
       </Routes>
     </Router>
   );
