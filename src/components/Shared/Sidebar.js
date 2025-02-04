@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaTachometerAlt, FaProjectDiagram, FaUsers, FaChartLine, FaCog, FaAngleLeft, FaAngleRight } from "react-icons/fa"; // Import icons
+import { FaHome, FaTachometerAlt, FaProjectDiagram, FaUsers, FaChartLine, FaCog, FaAngleLeft, FaAngleRight, FaCode } from "react-icons/fa"; // Import icons
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -12,6 +12,7 @@ const Sidebar = () => {
     { name: "Dashboard", path: "/dashboard", icon: <FaTachometerAlt /> },
     { name: "Projects", path: "/projects", icon: <FaProjectDiagram /> },
     { name: "Collab", path: "/Collab", icon: <FaUsers /> },
+    { name: "Editor", path: "/editor", icon: <FaCode /> }, 
     { name: "Analytics", path: "/analytics", icon: <FaChartLine /> },
     { name: "Settings", path: "/settings", icon: <FaCog /> },
   ];
