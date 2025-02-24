@@ -1,0 +1,70 @@
+/* Login.module.css */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 400px; /* Adjust width as needed */
+  padding: 30px;
+  margin: auto; /* Center the container horizontally */
+  border: 1px solid #ddd; /* Border around the container */
+  border-radius: 10px; /* Rounded corners */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  background-color: #ffffff; /* Light background color */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: fadeIn 1s ease-in-out; /* Fade-in animation */
+}
+
+h1 {
+  margin-bottom: 25px; /* Space between title and buttons */
+  font-size: 28px; /* Font size for the title */
+  color: #333; /* Darker color for the title */
+  font-weight: bold; /* Bold font for the title */
+  animation: fadeIn 1.5s ease-in-out; /* Fade-in animation */
+}
+
+/* New styles for button container */
+.buttonContainer {
+  display: flex; /* Use flexbox for horizontal alignment */
+  justify-content: space-between; /* Space buttons evenly */
+  width: 100%; /* Full width of the container */
+  animation: fadeIn 2s ease-in-out; /* Fade-in animation */
+}
+
+.button {
+  margin: 0 10px; /* Space between buttons */
+  width: 70px; /* Width of the square button */
+  height: 70px; /* Height of the square button */
+  border: 1px solid #ddd; /* Border around the button */
+  border-radius: 10px; /* Rounded corners for buttons */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: transform 0.3s; /* Smooth transition for hover effect */
+  background-color: transparent; /* Transparent background */
+  position: relative;
+}
+
+.button:hover {
+  transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.button:hover::after {
+  content: attr(alt); /* Display the label on hover */
+  position: absolute;
+  bottom: -30px; /* Position below the button */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333; /* Background color for the label */
+  color: #fff; /* Text color for the label */
+  padding: 5px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.logo {
+  width: 100%; /* Make logo fill the button */
+  object-fit: cover; /* Ensure logo covers the button without distortion */
+}

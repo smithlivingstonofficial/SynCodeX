@@ -1,0 +1,15 @@
+.dashboard-container {
+    display: flex;
+  }
+  
+  .main-content {
+    margin-left: 250px; /* Width of the sidebar */
+    padding: 20px;
+    width: 100%;
+    transition: margin-left 0.3s ease;
+  }
+  
+  .sidebar.collapsed + .main-content {
+    margin-left: 60px;
+  }
+  

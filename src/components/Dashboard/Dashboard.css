@@ -1,0 +1,35 @@
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr; /* Adjust column proportions */
+    gap: 20px;
+    align-items: start;
+  }
+  
+  .chart-section {
+    height: 250px; /* Reduce chart height */
+    width: 450px;   /* Full width of its grid column */
+    max-width: 450px; /* Set maximum width */
+    background-color: var(--card-bg);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .most-viewed-projects {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .notifications {
+    margin-top: 20px;
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  

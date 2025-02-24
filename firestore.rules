@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for "channels" collection
+    match /channels/{userId} {
+      allow read: if true;  // This rule allows everyone to read the channel details
+      allow write: if request.auth != null && request.auth.uid == userId; // Only the owner can write
+    }
+
+    // Rules for "projects" collection
+    match /projects/{projectId} {
+      allow read: if resource.data.visibility == "public" || request.auth != null;
+      allow write: if request.auth != null &&
+                   (request.resource.data.ownerId == request.auth.uid ||
+                    resource.data.ownerId == request.auth.uid);
+      // Allow authenticated users to update the likes field
+      allow update: if request.auth != null && request.resource.data.keys().hasOnly(['likes']) &&
+                    request.resource.data.likes is list;
+    }
+
+    // Rules for "users" collection
+    match /users/{userId} {
+      allow read: if true; // Make user data public
+    }
+
+    // General rules template for other collections
+    match /notifications/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Wildcard match for nested collections (use cautiously)
+    match /{collection=**}/{docId} {
+      allow read, write: if false; // Deny access by default
+    }
+  }
+}

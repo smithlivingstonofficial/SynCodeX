@@ -1,0 +1,49 @@
+.project-page {
+    padding: 20px;
+  }
+  
+  .project-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .project-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    width: 250px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .project-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  .project-card h2 {
+    font-size: 1.2em;
+    margin: 10px 0;
+  }
+  
+  .project-card p {
+    color: #555;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+  }
+  
+  .project-actions button {
+    margin: 5px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .project-actions button:hover {
+    opacity: 0.8;
+  }
+  
