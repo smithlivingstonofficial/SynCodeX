@@ -1,45 +1,64 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaTachometerAlt, FaProjectDiagram, FaUsers, FaChartLine, FaCog, FaAngleLeft, FaAngleRight, FaCode } from "react-icons/fa"; // Import icons
+import { Box, List, ListItem, ListItemIcon, ListItemText, Drawer, Divider, IconButton, Tooltip } from "@mui/material";
+import { Home as HomeIcon, Dashboard as DashboardIcon, Work as WorkIcon, People as PeopleIcon, Code as CodeIcon, BarChart as BarChartIcon, Settings as SettingsIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, Menu as MenuIcon } from "@mui/icons-material";
+import { useTheme } from "@mui/material/styles";
 import "./Sidebar.css";
 
 const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [open, setOpen] = useState(true);
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const menuItems = [
-    { name: "Home", path: "/home", icon: <FaHome /> },
-    { name: "Dashboard", path: "/dashboard", icon: <FaTachometerAlt /> },
-    { name: "Projects", path: "/projects", icon: <FaProjectDiagram /> },
-    { name: "Collab", path: "/Collab", icon: <FaUsers /> },
-    { name: "Editor", path: "/editor", icon: <FaCode /> }, 
-    { name: "Analytics", path: "/analytics", icon: <FaChartLine /> },
-    { name: "Settings", path: "/settings", icon: <FaCog /> },
+    { name: "Home", path: "/home", icon: <HomeIcon /> },
+    { name: "Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
+    { name: "Projects", path: "/projects", icon: <WorkIcon /> },
+    { name: "Collab", path: "/Collab", icon: <PeopleIcon /> },
+    { name: "Editor", path: "/editor", icon: <CodeIcon /> },
+    { name: "Analytics", path: "/analytics", icon: <BarChartIcon /> },
+    { name: "Settings", path: "/settings", icon: <SettingsIcon /> },
   ];
 
-  const handleCollapse = () => {
-    setCollapsed(!collapsed);
+  const handleDrawerToggle = () => {
+    setOpen(!open);
   };
 
   return (
-    <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <ul className="menu">
-        {menuItems.map((item, index) => (
-          <li
-            key={index}
-            className={`menu-item ${
-              window.location.pathname === item.path ? "active" : ""
-            }`}
-            onClick={() => navigate(item.path)}
-          >
-            {item.icon} <span>{item.name}</span>
-          </li>
-        ))}
-      </ul>
-      <button className="collapse-button" onClick={handleCollapse}>
-        {collapsed ? <FaAngleRight /> : <FaAngleLeft />}
-      </button>
-    </div>
+    <Box sx={{ display: "flex" }}>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: open ? 240 : 60,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: open ? 240 : 60,
+            boxSizing: "border-box",
+            transition: theme.transitions.create("width", {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+          },
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", padding: theme.spacing(0, 1), justifyContent: "flex-end" }}>
+          <IconButton onClick={handleDrawerToggle}>
+            {open ? <ChevronLeftIcon /> : <MenuIcon />}
+          </IconButton>
+        </Box>
+        <Divider />
+        <List>
+          {menuItems.map((item, index) => (
+            <Tooltip title={open ? "" : item.name} placement="right" key={index}>
+              <ListItem button onClick={() => navigate(item.path)}>
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                {open && <ListItemText primary={item.name} />}
+              </ListItem>
+            </Tooltip>
+          ))}
+        </List>
+      </Drawer>
+    </Box>
   );
 };
 
