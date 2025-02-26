@@ -1,10 +1,10 @@
-// Edit Profile Page
 import React, { useState, useEffect } from "react";
 import { getAuth, updateProfile } from "firebase/auth";
 import { db, storage } from "../../firebase/config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import "./Profile.css";
+import { Container, TextField, Button, Avatar, Typography, Box, CircularProgress, Grid, Paper } from '@mui/material';
+import { styled } from '@mui/system';
 
 const Profile = () => {
   const auth = getAuth();
@@ -81,52 +81,78 @@ const Profile = () => {
   };
 
   if (!user) {
-    return <h1>Please log in to edit your profile.</h1>;
+    return <Typography variant="h5" align="center">Please log in to edit your profile.</Typography>;
   }
 
   return (
-    <div className="profile-container">
-      <form onSubmit={handleSubmit} className="profile-form">
-        <div className="form-group">
-          <label>Channel Name</label>
-          <input
-            type="text"
-            name="channelName"
-            value={profile.channelName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-          <textarea
-            name="description"
-            value={profile.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <button type="submit">Save Changes</button>
-      </form>
-
-      <div className="profile-picture-container">
-        <label htmlFor="profile-picture">
-          <img
-            src={profile.profilePicture || "/default-profile.png"}
-            alt="Profile"
-          />
-        </label>
-        <input
-          type="file"
-          id="profile-picture"
-          accept="image/*"
-          onChange={handleImageUpload}
-        />
-        {isLoading && <p>Uploading...</p>}
-      </div>
-    </div>
+    <Container maxWidth="md">
+      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
+        <Typography variant="h4" align="center" gutterBottom>Channel Details</Typography>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Channel Name"
+                name="channelName"
+                value={profile.channelName}
+                onChange={handleChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Email"
+                name="email"
+                value={profile.email}
+                onChange={handleChange}
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Description"
+                name="description"
+                value={profile.description}
+                onChange={handleChange}
+                multiline
+                rows={4}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Box display="flex" flexDirection="column" alignItems="center">
+                <Avatar
+                  src={profile.profilePicture || "/default-profile.png"}
+                  alt="Profile"
+                  sx={{ width: 100, height: 100, mb: 2 }}
+                />
+                <Button variant="contained" component="label">
+                  Upload Picture
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                </Button>
+                {isLoading && <CircularProgress size={24} sx={{ mt: 2 }} />}
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6} display="flex" alignItems="center" justifyContent="center">
+              <Button type="submit" variant="contained" color="primary" size="large">
+                Save Changes
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 

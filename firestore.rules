@@ -27,7 +27,8 @@ service cloud.firestore {
 
     // Rules for "users" collection
     match /users/{userId} {
-      allow read: if true; // Make user data public to fetch channel name
+      allow read: if request.auth != null; // Allow authenticated users to read user data
+      allow write: if request.auth != null && request.auth.uid == userId; // Only the owner can write
     }
 
     // General rules template for other collections

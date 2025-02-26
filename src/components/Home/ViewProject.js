@@ -66,7 +66,11 @@ const ViewProject = () => {
           if (ownerSnap.exists()) {
             const ownerData = ownerSnap.data();
             console.log("Owner Data:", ownerData); // Debug log
-            setChannel({ name: ownerData.displayName, logo: ownerData.profilePicture });
+            if (ownerData) {
+              setChannel({ name: ownerData.displayName, logo: ownerData.profilePicture });
+            } else {
+              console.warn("Owner data is not available"); // Debug log
+            }
           } else {
             console.warn("Owner document does not exist"); // Debug log
           }
