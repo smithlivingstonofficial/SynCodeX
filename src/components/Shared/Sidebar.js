@@ -5,6 +5,8 @@ import { Home as HomeIcon, Dashboard as DashboardIcon, Work as WorkIcon, People 
 import { useTheme } from "@mui/material/styles";
 import "./Sidebar.css";
 
+export const drawerWidth = 240;
+
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();

@@ -4,6 +4,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Button } from "@mui/material";
 import { styled } from "@mui/system";
 import "./Navbar.css";
+import { drawerWidth } from "./Sidebar";
 
 const NavbarContainer = styled('div')(({ theme }) => ({
   flexGrow: 1,
@@ -46,7 +47,7 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
 
   return (
     <NavbarContainer>
-      <AppBar position="fixed" sx={{ backgroundColor: "white" }}>
+      <AppBar position="fixed" sx={{ backgroundColor: "white", width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}>
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "black" }} onClick={() => navigate("/home")} style={{ cursor: 'pointer' }}>
             SynCodeX
