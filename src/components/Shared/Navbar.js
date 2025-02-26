@@ -1,13 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Button } from "@mui/material";
+import { styled } from "@mui/system";
 import "./Navbar.css";
+
+const NavbarContainer = styled('div')(({ theme }) => ({
+  flexGrow: 1,
+}));
+
+const UploadButton = styled(Button)(({ theme }) => ({
+  backgroundColor: theme?.palette?.primary?.main || "#1976d2",
+  color: "white",
+  marginRight: theme?.spacing(2) || "16px",
+  '&:hover': {
+    backgroundColor: theme?.palette?.primary?.dark || "#115293",
+  },
+}));
 
 const Navbar = ({ toggleTheme, isDarkMode }) => {
   const auth = getAuth();
   const navigate = useNavigate();
   const [user, setUser] = useState(auth.currentUser);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(null); // Change to null
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -21,49 +36,53 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
     auth.signOut().then(() => navigate("/"));
   };
 
-  const toggleDropdown = () => {
-    setShowDropdown((prev) => !prev);
+  const toggleDropdown = (event) => {
+    setShowDropdown(event.currentTarget); // Set the anchor element
+  };
+
+  const handleClose = () => {
+    setShowDropdown(null); // Close the menu
   };
 
   return (
-    <div className={`navbar-container ${isDarkMode ? "dark-mode" : ""}`}>
-      <nav className="navbar">
-        <div className="navbar-left">
-          <h1 onClick={() => navigate("/home")} className="navbar-logo">
+    <NavbarContainer>
+      <AppBar position="fixed" sx={{ backgroundColor: "white" }}>
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "black" }} onClick={() => navigate("/home")} style={{ cursor: 'pointer' }}>
             SynCodeX
-          </h1>
-        </div>
-
-        <div className="navbar-right">
-          <button
-            className="upload-button"
-            onClick={() => navigate("/upload")}
-          >
-          <img src="assets/icons/upload.png" className="upload-icon" alt="Upload Icon"/>  
+          </Typography>
+          <UploadButton onClick={() => navigate("/upload")}>
+            <img src="assets/icons/upload.png" className="upload-icon" alt="Upload Icon" style={{ marginRight: 8 }} />
             Upload
-          </button>
+          </UploadButton>
           {user && (
-            <div className="profile-container" onClick={toggleDropdown}>
-              <img
-                src={user?.photoURL || "/default-profile.png"}
-                alt="User Profile" // Added alt prop to resolve ESLint warning
-                className="profile-picture"
-              />
-              {showDropdown && (
-                <div className="dropdown-menu">
-                  <p onClick={() => navigate("/profile")}>Profile</p>
-                  <p onClick={toggleTheme}>
-                    {isDarkMode ? "Light Theme" : "Dark Theme"}
-                  </p>
-                  <p onClick={handleLogout}>Sign Out</p>
-                </div>
-              )}
+            <div>
+              <IconButton onClick={toggleDropdown} color="inherit">
+                <Avatar src={user?.photoURL || "/default-profile.png"} alt="User Profile" />
+              </IconButton>
+              <Menu
+                anchorEl={showDropdown}
+                open={Boolean(showDropdown)}
+                onClose={handleClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={() => { navigate("/profile"); handleClose(); }}>Profile</MenuItem>
+                <MenuItem onClick={() => { toggleTheme(); handleClose(); }}>{isDarkMode ? "Light Theme" : "Dark Theme"}</MenuItem>
+                <MenuItem onClick={() => { handleLogout(); handleClose(); }}>Sign Out</MenuItem>
+              </Menu>
             </div>
           )}
-        </div>
-      </nav>
+        </Toolbar>
+      </AppBar>
       {isDarkMode && <div className="multi-color-separator"></div>}
-    </div>
+    </NavbarContainer>
   );
 };
 

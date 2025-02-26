@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, getDoc, doc } from "firebase/firestore"; // Import necessary functions from Firestore
-import { db } from "../../firebase/config"; // Ensure that this points to your Firebase config
-import ProjectCard from "../Projects/ProjectCard"; // Component to display the card
-import "./HomePage.css"; // Your styles
+import { collection, getDocs, getDoc, doc } from "firebase/firestore";
+import { db } from "../../firebase/config";
+import ProjectCard from "../Projects/ProjectCard";
+import { Grid, Container, useMediaQuery } from "@mui/material"; // Import useMediaQuery
+import "./HomePage.css";
 
-const HomePage = () => {
+const HomePage = ({ isSidebarOpen }) => { // Add isSidebarOpen prop
   const [projects, setProjects] = useState([]);
+  const isDesktop = useMediaQuery('(min-width:1200px)'); // Media query for desktop
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // Fetch all projects from the Firestore collection "projects"
         const querySnapshot = await getDocs(collection(db, "projects"));
-        
-        // Log the fetched project data
         console.log("Fetched Projects:", querySnapshot.docs);
 
         const projectsData = await Promise.all(
@@ -21,12 +20,11 @@ const HomePage = () => {
             const project = docSnapshot.data();
             let channelData = { channelName: "Unknown", profilePicture: "/default-profile.png" };
 
-            // Fetch channel data based on ownerId in project document
             if (project.ownerId) {
               try {
                 const channelDoc = await getDoc(doc(db, "channels", project.ownerId));
                 if (channelDoc.exists()) {
-                  channelData = channelDoc.data(); // Set channel data
+                  channelData = channelDoc.data();
                 } else {
                   console.warn("Channel data not found for ownerId:", project.ownerId);
                 }
@@ -35,19 +33,16 @@ const HomePage = () => {
               }
             }
 
-            // Log the merged project and channel data
             console.log("Merged Project and Channel Data:", { ...project, ...channelData });
 
-            // Return the merged project and channel data
             return {
               id: docSnapshot.id,
               ...project,
-              ...channelData, // Merged data with channel details
+              ...channelData,
             };
           })
         );
 
-        // Set the fetched projects data with channel details
         setProjects(projectsData);
 
       } catch (error) {
@@ -59,11 +54,17 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="project-grid">
-      {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} /> // Pass the project data with channel details to ProjectCard
-      ))}
-    </div>
+    <Container style={{ padding: 20, marginTop: 80, marginLeft: -250 }}> {/* Add padding for equal space and top margin */}
+      <Grid container spacing={0} justifyContent="center">
+        {projects.map((project) => (
+          <Grid item key={project.id} xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ width: 350, height: 230, margin: 5 }}> {/* Increase width */}
+              <ProjectCard project={project} />
+            </div>
+          </Grid>
+        ))}
+      </Grid>
+    </Container>
   );
 };
 
