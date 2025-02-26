@@ -54,10 +54,10 @@ const HomePage = ({ isSidebarOpen }) => { // Add isSidebarOpen prop
   }, []);
 
   return (
-    <Container style={{ padding: 20, marginTop: 80, marginLeft: -250 }}> {/* Add padding for equal space and top margin */}
+    <Container style={{ padding: 20, marginTop: 60, marginLeft: isSidebarOpen ? 0 : -100 }}> {/* Adjust margin to move cards near sidebar and add top margin */}
       <Grid container spacing={0} justifyContent="center">
         {projects.map((project) => (
-          <Grid item key={project.id} xs={12} sm={6} md={4} lg={3} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Grid item key={project.id} xs={12} sm={6} md={isSidebarOpen ? 6 : 4} lg={isSidebarOpen ? 4 : 3} sx={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: 350, height: 230, margin: 5 }}> {/* Increase width */}
               <ProjectCard project={project} />
             </div>
