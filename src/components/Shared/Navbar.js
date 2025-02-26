@@ -4,7 +4,7 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Button } from "@mui/material";
 import { styled } from "@mui/system";
 import "./Navbar.css";
-import { drawerWidth } from "./Sidebar";
+import { drawerWidth, collapsedDrawerWidth } from "./Sidebar";
 
 const NavbarContainer = styled('div')(({ theme }) => ({
   flexGrow: 1,
@@ -19,7 +19,7 @@ const UploadButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const Navbar = ({ toggleTheme, isDarkMode }) => {
+const Navbar = ({ toggleTheme, isDarkMode, open, setOpen }) => {
   const auth = getAuth();
   const navigate = useNavigate();
   const [user, setUser] = useState(auth.currentUser);
@@ -47,7 +47,14 @@ const Navbar = ({ toggleTheme, isDarkMode }) => {
 
   return (
     <NavbarContainer>
-      <AppBar position="fixed" sx={{ backgroundColor: "white", width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          backgroundColor: "white",
+          width: `calc(100% - ${open ? drawerWidth : collapsedDrawerWidth}px)`,
+          ml: `${open ? drawerWidth : collapsedDrawerWidth}px`,
+        }}
+      >
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "black" }} onClick={() => navigate("/home")} style={{ cursor: 'pointer' }}>
             SynCodeX

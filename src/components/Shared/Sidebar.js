@@ -6,6 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import "./Sidebar.css";
 
 export const drawerWidth = 240;
+export const collapsedDrawerWidth = 60;
 
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
@@ -31,10 +32,10 @@ const Sidebar = () => {
       <Drawer
         variant="permanent"
         sx={{
-          width: open ? 240 : 60,
+          width: open ? drawerWidth : collapsedDrawerWidth,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: open ? 240 : 60,
+            width: open ? drawerWidth : collapsedDrawerWidth,
             boxSizing: "border-box",
             transition: theme.transitions.create("width", {
               easing: theme.transitions.easing.sharp,
