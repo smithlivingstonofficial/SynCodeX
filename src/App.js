@@ -14,6 +14,7 @@ import Collab from "./components/Collab/CollabCreation/CollabCreation";
 // import Sidebar from "./components/Shared/Sidebar";
 import ViewProject from "./components/Home/ViewProject";
 import Editor from './components/Editor/Editor';
+import ChannelPage from "./components/Channel/ChannelPage"; // Import ChannelPage
 
 function App() {
   const [user, setUser] = useState(null); // State to manage the current user
@@ -64,6 +65,7 @@ function App() {
         <Route path="/projects/:id" component={ProjectDetails} />
         <Route path="/project/:projectId" element={<ViewProject />} />
         <Route path="/editor" element={<Editor />} />
+        <Route path="/channel/:userId" element={<ChannelPage />} /> {/* Add ChannelPage route */}
       </Routes>
     </Router>
   );

@@ -21,13 +21,18 @@ const ProjectCard = ({ project }) => {
     fetchThumbnail();
   }, [project.id]);
 
-  const handleClick = () => {
+  const handleProjectClick = () => {
     navigate(`/project/${project.id}`);
   };
 
+  const handleChannelClick = (e) => {
+    e.stopPropagation(); // Prevent the project click handler from being triggered
+    navigate(`/channel/${project.ownerId}`);
+  };
+
   return (
-    <Card onClick={handleClick} sx={{ maxWidth: 345 }}>
-      <CardActionArea>
+    <Card sx={{ maxWidth: 345 }}>
+      <CardActionArea onClick={handleProjectClick}>
         <CardMedia
           component="img"
           height="140"
@@ -36,12 +41,22 @@ const ProjectCard = ({ project }) => {
         />
         <CardContent>
           <Box display="flex" alignItems="center">
-            <Avatar src={project.profilePicture || "/default-profile.png"} alt="Channel Profile" />
+            <Avatar 
+              src={project.profilePicture || "/default-profile.png"} 
+              alt="Channel Profile" 
+              onClick={handleChannelClick} 
+              sx={{ cursor: 'pointer' }} 
+            />
             <Box ml={2}>
               <Typography variant="h6" component="div">
                 {project.title}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                onClick={handleChannelClick} 
+                sx={{ cursor: 'pointer' }}
+              >
                 {project.channelName}
               </Typography>
             </Box>

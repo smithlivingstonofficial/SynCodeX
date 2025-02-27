@@ -14,7 +14,7 @@ const ViewProject = () => {
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
   const [downloadURL, setDownloadURL] = useState("");
-  const [channel, setChannel] = useState({ name: "", logo: "" });
+  const [channel, setChannel] = useState({ channelName: "", profilePicture: "", description: "" });
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState([]);
@@ -25,20 +25,11 @@ const ViewProject = () => {
 
   useEffect(() => {
     const fetchProject = async () => {
-      if (!user) {
-        console.error("User is not authenticated"); // Debug log
-        return;
-      }
-
-      console.log("Authenticated User:", user); // Debug log
-
       const docRef = firestoreDoc(db, "projects", projectId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const projectData = docSnap.data();
-        console.log("Project Data:", projectData); // Debug log
-        console.log("Project Visibility:", projectData.visibility); // Debug log
         setProject(projectData);
 
         // Set like count and check if the user has liked the project
@@ -50,13 +41,10 @@ const ViewProject = () => {
           const fileRef = storageRef(storage, `projects/${projectId}/${projectData.downloadPath}`);
           try {
             const url = await getDownloadURL(fileRef);
-            console.log("Download URL:", url); // Debug log
             setDownloadURL(url);
           } catch (error) {
-            console.error("Error fetching download URL:", error); // Debug log
+            console.error("Error fetching download URL:", error);
           }
-        } else {
-          console.warn("Download path is not defined in project data"); // Debug log
         }
 
         // Fetch the channel information using ownerId
@@ -65,18 +53,9 @@ const ViewProject = () => {
           const ownerSnap = await getDoc(ownerRef);
           if (ownerSnap.exists()) {
             const ownerData = ownerSnap.data();
-            console.log("Owner Data:", ownerData); // Debug log
-            if (ownerData) {
-              setChannel({ name: ownerData.displayName, logo: ownerData.profilePicture });
-            } else {
-              console.warn("Owner data is not available"); // Debug log
-            }
-          } else {
-            console.warn("Owner document does not exist"); // Debug log
+            setChannel({ channelName: ownerData.channelName, profilePicture: ownerData.profilePicture, description: ownerData.description });
           }
         }
-      } else {
-        console.warn("Project document does not exist"); // Debug log
       }
     };
 
@@ -91,12 +70,11 @@ const ViewProject = () => {
 
     fetchProject();
     fetchComments();
-  }, [projectId, userId, user]);
+  }, [projectId, userId]);
 
   const handleDownload = async () => {
-    console.log("Download button clicked"); // Debug log
     if (!downloadURL) {
-      console.error("Download URL is not available"); // Debug log
+      console.error("Download URL is not available");
       return;
     }
     try {
@@ -111,7 +89,7 @@ const ViewProject = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading the file:", error); // Debug log
+      console.error("Error downloading the file:", error);
     }
   };
 
@@ -140,8 +118,8 @@ const ViewProject = () => {
         setLikeCount(likeCount + 1); // Increase the like count
       }
     } catch (error) {
-      console.error("Error updating like status:", error); // Detailed error log
-      alert("Failed to update like status. Error: " + error.message); // Show detailed error message
+      console.error("Error updating like status:", error);
+      alert("Failed to update like status. Error: " + error.message);
     }
   };
 
@@ -183,7 +161,7 @@ const ViewProject = () => {
   }
 
   return (
-    <Box display="flex">
+    <Box display="flex" mt={3}>
       <SideBar />
       <Box flexGrow={1}>
         <NavBar />
@@ -208,10 +186,15 @@ const ViewProject = () => {
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar src={channel.logo || "/default-profile.png"} alt="Channel Logo" sx={{ mr: 2 }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {channel.name}
-                      </Typography>
+                      <Avatar src={channel.profilePicture || "/default-profile.png"} alt="Channel Logo" sx={{ mr: 2 }} />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          {channel.channelName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {channel.description}
+                        </Typography>
+                      </Box>
                     </Box>
                     <Box display="flex" alignItems="center" mb={2}>
                       <IconButton onClick={handleLikeClick} color="primary">
