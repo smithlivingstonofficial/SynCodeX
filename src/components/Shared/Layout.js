@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Button, Box, Badge, InputBase } from "@mui/material";
-import { styled, alpha } from "@mui/system";
+import { AppBar, Toolbar, Typography, IconButton, Menu, MenuItem, Avatar, Button, Box, Badge, InputBase, List, ListItem, ListItemIcon, ListItemText, Drawer, Divider, Tooltip } from "@mui/material";
+import { styled, alpha, useTheme } from "@mui/system";
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
+import { Home as HomeIcon, Dashboard as DashboardIcon, Work as WorkIcon, People as PeopleIcon, Code as CodeIcon, BarChart as BarChartIcon, Settings as SettingsIcon } from "@mui/icons-material";
 import "./Navbar.css";
-import { drawerWidth, collapsedDrawerWidth } from "./Sidebar";
+import "./Sidebar.css";
+
+const drawerWidth = 240;
+const collapsedDrawerWidth = 60;
 
 const NavbarContainer = styled('div')(({ theme }) => ({
   flexGrow: 1,
@@ -64,13 +68,15 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-const Navbar = ({ toggleTheme, isDarkMode, open, setOpen }) => {
+const Layout = ({ toggleTheme, isDarkMode, children }) => {
   const auth = getAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [user, setUser] = useState(auth.currentUser);
   const [showDropdown, setShowDropdown] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -183,8 +189,18 @@ const Navbar = ({ toggleTheme, isDarkMode, open, setOpen }) => {
     </Menu>
   );
 
+  const menuItems = [
+    { name: "Home", path: "/home", icon: <HomeIcon /> },
+    { name: "Dashboard", path: "/dashboard", icon: <DashboardIcon /> },
+    { name: "Projects", path: "/projects", icon: <WorkIcon /> },
+    { name: "Collab", path: "/Collab", icon: <PeopleIcon /> },
+    { name: "Editor", path: "/editor", icon: <CodeIcon /> },
+    { name: "Analytics", path: "/analytics", icon: <BarChartIcon /> },
+    { name: "Settings", path: "/settings", icon: <SettingsIcon /> },
+  ];
+
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ display: "flex" }}>
       <AppBar
         position="fixed"
         sx={{
@@ -269,9 +285,36 @@ const Navbar = ({ toggleTheme, isDarkMode, open, setOpen }) => {
       </AppBar>
       {renderMobileMenu}
       {renderMenu}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: open ? drawerWidth : collapsedDrawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: open ? drawerWidth : collapsedDrawerWidth,
+            boxSizing: "border-box",
+            transition: (theme?.transitions?.create || ((props) => props))("width"),
+          },
+        }}
+      >
+        <Divider />
+        <List>
+          {menuItems.map((item, index) => (
+            <Tooltip title={open ? "" : item.name} placement="right" key={index}>
+              <ListItem button onClick={() => navigate(item.path)}>
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                {open && <ListItemText primary={item.name} />}
+              </ListItem>
+            </Tooltip>
+          ))}
+        </List>
+      </Drawer>
       {isDarkMode && <div className="multi-color-separator"></div>}
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        {children}
+      </Box>
     </Box>
   );
 };
 
-export default Navbar;
+export default Layout;

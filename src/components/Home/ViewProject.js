@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { db, auth, storage } from "../../firebase/config";
 import { doc as firestoreDoc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, onSnapshot } from "firebase/firestore";
 import { ref as storageRef, getDownloadURL } from "firebase/storage";
@@ -7,11 +7,11 @@ import { Box, Button, Card, CardContent, CardMedia, Typography, Avatar, IconButt
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SendIcon from '@mui/icons-material/Send';
-import SideBar from '../Shared/Sidebar'; 
-import NavBar from '../Shared/Navbar'; 
+import Layout from '../Shared/Layout'; // Import Layout component
 
 const ViewProject = () => {
   const { projectId } = useParams();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [project, setProject] = useState(null);
   const [downloadURL, setDownloadURL] = useState("");
   const [channel, setChannel] = useState({ channelName: "", profilePicture: "", description: "" });
@@ -53,9 +53,18 @@ const ViewProject = () => {
           const ownerSnap = await getDoc(ownerRef);
           if (ownerSnap.exists()) {
             const ownerData = ownerSnap.data();
-            setChannel({ channelName: ownerData.channelName, profilePicture: ownerData.profilePicture, description: ownerData.description });
+            console.log("Fetched channel data:", ownerData); // Debug log
+            setChannel({ 
+              channelName: ownerData.channelName || "Unknown Channel", 
+              profilePicture: ownerData.profilePicture || "/default-profile.png", 
+              description: ownerData.description || "No description available" 
+            });
+          } else {
+            console.error("Owner document does not exist");
           }
         }
+      } else {
+        console.error("Project document does not exist");
       }
     };
 
@@ -71,6 +80,10 @@ const ViewProject = () => {
     fetchProject();
     fetchComments();
   }, [projectId, userId]);
+
+  useEffect(() => {
+    console.log("Channel state updated:", channel); // Debug log
+  }, [channel]);
 
   const handleDownload = async () => {
     if (!downloadURL) {
@@ -151,6 +164,10 @@ const ViewProject = () => {
     setReplyTo(comment);
   };
 
+  const handleChannelClick = () => {
+    navigate(`/channel/${project.ownerId}`);
+  };
+
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp.seconds * 1000);
     return date.toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -161,128 +178,124 @@ const ViewProject = () => {
   }
 
   return (
-    <Box display="flex" mt={3}>
-      <SideBar />
-      <Box flexGrow={1}>
-        <NavBar />
-        <Container maxWidth="lg">
-          <Grid container spacing={3} mt={5}>
-            <Grid item xs={12} md={8}>
-              <Card sx={{ display: 'flex', flexDirection: 'column', width: '100%', boxShadow: 3 }}>
-                <CardMedia
-                  component="img"
-                  sx={{ width: '100%', height: { xs: 200, md: 300 }, objectFit: 'cover' }}
-                  image={project.thumbnailURL || "/default-thumbnail.jpg"}
-                  alt={project.title}
-                />
-                <CardContent sx={{ flex: 1 }}>
-                  <Box display="flex" flexDirection="column" height="100%">
-                    <Box mb={2}>
-                      <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                        {project.title}
-                      </Typography>
-                      <Typography variant="body1" color="text.primary" paragraph>
-                        {project.description}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <Avatar src={channel.profilePicture || "/default-profile.png"} alt="Channel Logo" sx={{ mr: 2 }} />
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {channel.channelName}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {channel.description}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box display="flex" alignItems="center" mb={2}>
-                      <IconButton onClick={handleLikeClick} color="primary">
-                        {isLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                      </IconButton>
-                      <Typography variant="body2" color="text.secondary">
-                        {likeCount} {likeCount === 1 ? "like" : "likes"}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between" mt="auto">
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
-                        onClick={handleDownload}
-                        disabled={!downloadURL}
-                        sx={{ mr: 2 }}
-                      >
-                        Download Project
-                      </Button>
-                      <Button variant="contained" color="secondary" onClick={() => window.open(project.editorLink, "_blank")}>
-                        Open In Editor
-                      </Button>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Paper elevation={3} sx={{ maxHeight: '70vh', overflowY: 'auto', p: 2 }}>
-                <Typography variant="h6" gutterBottom>Comments</Typography>
-                {replyTo && (
-                  <Box mb={2} p={2} sx={{ border: '1px solid #ccc', borderRadius: 2, backgroundColor: '#f0f0f0' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Replying to: {replyTo.userName}
+    <Layout>
+      <Container maxWidth="lg">
+        <Grid container spacing={3} mt={5}>
+          <Grid item xs={12} md={8}>
+            <Card sx={{ display: 'flex', flexDirection: 'column', width: '100%', boxShadow: 3 }}>
+              <CardMedia
+                component="img"
+                sx={{ width: '100%', height: { xs: 200, md: 300 }, objectFit: 'cover' }}
+                image={project.thumbnailURL || "/default-thumbnail.jpg"}
+                alt={project.title}
+              />
+              <CardContent sx={{ flex: 1 }}>
+                <Box display="flex" flexDirection="column" height="100%">
+                  <Box mb={2}>
+                    <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+                      {project.title}
                     </Typography>
-                    <Typography variant="body1">{replyTo.text}</Typography>
-                    <Button size="small" onClick={() => setReplyTo(null)}>Cancel Reply</Button>
+                    <Typography variant="body1" color="text.primary" paragraph>
+                      {project.description}
+                    </Typography>
                   </Box>
-                )}
-                <Box mb={2}>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Add a comment"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    multiline
-                    rows={2}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton color="primary" onClick={handleAddComment}>
-                            <SendIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Box>
-                {comments.map((comment) => (
-                  <Box key={comment.id} mb={2} p={2} sx={{ border: '1px solid #ccc', borderRadius: 2 }}>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <Avatar src={comment.userPhoto || "/default-profile.png"} alt={comment.userName} sx={{ mr: 2 }} />
+                  <Box display="flex" alignItems="center" mb={2} onClick={handleChannelClick} sx={{ cursor: 'pointer' }}>
+                    <Avatar src={channel.profilePicture || "/default-profile.png"} alt="Channel Logo" sx={{ mr: 2 }} />
+                    <Box>
                       <Typography variant="body2" color="text.secondary">
-                        {comment.userName}
+                        {channel.channelName}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
-                        {formatTimestamp(comment.timestamp)}
+                      <Typography variant="body2" color="text.secondary">
+                        {channel.description}
                       </Typography>
                     </Box>
-                    <Typography variant="body1">{comment.text}</Typography>
-                    <Button size="small" onClick={() => handleReply(comment)}>Reply</Button>
-                    {comment.replyTo && (
-                      <Box mt={2} ml={4} p={2} sx={{ border: '1px solid #ccc', borderRadius: 2, backgroundColor: '#f9f9f9' }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Replying to: {comments.find(c => c.id === comment.replyTo)?.userName}
-                        </Typography>
-                        <Typography variant="body1">{comments.find(c => c.id === comment.replyTo)?.text}</Typography>
-                      </Box>
-                    )}
                   </Box>
-                ))}
-              </Paper>
-            </Grid>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <IconButton onClick={handleLikeClick} color="primary">
+                      {isLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    </IconButton>
+                    <Typography variant="body2" color="text.secondary">
+                      {likeCount} {likeCount === 1 ? "like" : "likes"}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" mt="auto">
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      onClick={handleDownload}
+                      disabled={!downloadURL}
+                      sx={{ mr: 2 }}
+                    >
+                      Download Project
+                    </Button>
+                    <Button variant="contained" color="secondary" onClick={() => window.open(project.editorLink, "_blank")}>
+                      Open In Editor
+                    </Button>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
           </Grid>
-        </Container>
-      </Box>
-    </Box>
+          <Grid item xs={12} md={4}>
+            <Paper elevation={3} sx={{ maxHeight: '70vh', overflowY: 'auto', p: 2 }}>
+              <Typography variant="h6" gutterBottom>Comments</Typography>
+              {replyTo && (
+                <Box mb={2} p={2} sx={{ border: '1px solid #ccc', borderRadius: 2, backgroundColor: '#f0f0f0' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Replying to: {replyTo.userName}
+                  </Typography>
+                  <Typography variant="body1">{replyTo.text}</Typography>
+                  <Button size="small" onClick={() => setReplyTo(null)}>Cancel Reply</Button>
+                </Box>
+              )}
+              <Box mb={2}>
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  label="Add a comment"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  multiline
+                  rows={2}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton color="primary" onClick={handleAddComment}>
+                          <SendIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+              {comments.map((comment) => (
+                <Box key={comment.id} mb={2} p={2} sx={{ border: '1px solid #ccc', borderRadius: 2 }}>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <Avatar src={comment.userPhoto || "/default-profile.png"} alt={comment.userName} sx={{ mr: 2 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      {comment.userName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+                      {formatTimestamp(comment.timestamp)}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1">{comment.text}</Typography>
+                  <Button size="small" onClick={() => handleReply(comment)}>Reply</Button>
+                  {comment.replyTo && (
+                    <Box mt={2} ml={4} p={2} sx={{ border: '1px solid #ccc', borderRadius: 2, backgroundColor: '#f9f9f9' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Replying to: {comments.find(c => c.id === comment.replyTo)?.userName}
+                      </Typography>
+                      <Typography variant="body1">{comments.find(c => c.id === comment.replyTo)?.text}</Typography>
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+    </Layout>
   );
 };
 

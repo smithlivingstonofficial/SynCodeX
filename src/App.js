@@ -11,14 +11,16 @@ import EditProject from "./components/Projects/EditProject";
 import HomePage from "./components/Home/HomePage";
 import ProjectDetails from "./components/Home/ProjectDetails";
 import Collab from "./components/Collab/CollabCreation/CollabCreation";
-// import Sidebar from "./components/Shared/Sidebar";
+import Sidebar from "./components/Shared/Sidebar";
 import ViewProject from "./components/Home/ViewProject";
 import Editor from './components/Editor/Editor';
 import ChannelPage from "./components/Channel/ChannelPage"; // Import ChannelPage
+import Navbar from "./components/Shared/Navbar";
 
 function App() {
   const [user, setUser] = useState(null); // State to manage the current user
   const [loading, setLoading] = useState(true); // State to manage loading state
+  const [open, setOpen] = useState(true); // State to manage sidebar open state
 
   useEffect(() => {
     const auth = getAuth();
@@ -40,6 +42,8 @@ function App() {
 
   return (
     <Router>
+      <Navbar open={open} setOpen={setOpen} />
+      <Sidebar open={open} setOpen={setOpen} />
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<Login />} />

@@ -14,22 +14,30 @@ const ChannelPage = () => {
 
   useEffect(() => {
     const fetchChannelInfo = async () => {
-      const userRef = firestoreDoc(db, "users", userId);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        setChannel({ channelName: userData.channelName, profilePicture: userData.profilePicture, description: userData.description });
-      } else {
-        console.error("User document does not exist");
+      try {
+        const userRef = firestoreDoc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setChannel({ channelName: userData.channelName, profilePicture: userData.profilePicture, description: userData.description });
+        } else {
+          console.error("User document does not exist");
+        }
+      } catch (error) {
+        console.error("Error fetching channel info: ", error);
       }
     };
 
     const fetchProjects = async () => {
-      const projectsRef = collection(db, "projects");
-      const q = query(projectsRef, where("ownerId", "==", userId), where("visibility", "==", "public"));
-      const querySnapshot = await getDocs(q);
-      const projectsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProjects(projectsData);
+      try {
+        const projectsRef = collection(db, "projects");
+        const q = query(projectsRef, where("ownerId", "==", userId), where("visibility", "==", "public"));
+        const querySnapshot = await getDocs(q);
+        const projectsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProjects(projectsData);
+      } catch (error) {
+        console.error("Error fetching projects: ", error);
+      }
     };
 
     fetchChannelInfo();
@@ -50,9 +58,10 @@ const ChannelPage = () => {
             <Avatar src={channel.profilePicture || "/default-profile.png"} alt="Channel Logo" sx={{ width: 80, height: 80, mr: 2 }} />
             <Box>
               <Typography variant="h4">{channel.channelName}</Typography>
-              <Typography variant="body1" color="text.secondary">{channel.description}</Typography>
+              <Typography variant="body2" color="text.secondary">{channel.description}</Typography>
             </Box>
           </Box>
+          <Typography variant="h5" mb={3}>Channel: {channel.channelName}</Typography>
           <Grid container spacing={3}>
             {projects.map((project) => (
               <Grid item xs={12} sm={6} md={4} key={project.id}>

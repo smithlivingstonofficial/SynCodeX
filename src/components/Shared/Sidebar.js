@@ -8,8 +8,7 @@ import "./Sidebar.css";
 export const drawerWidth = 240;
 export const collapsedDrawerWidth = 60;
 
-const Sidebar = () => {
-  const [open, setOpen] = useState(true);
+const Sidebar = ({ open, setOpen }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
