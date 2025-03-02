@@ -19,6 +19,7 @@ const ChannelPage = () => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
+          console.log("Fetched channel data:", userData); // Debug log
           setChannel({ channelName: userData.channelName, profilePicture: userData.profilePicture, description: userData.description });
         } else {
           console.error("User document does not exist");
@@ -43,6 +44,10 @@ const ChannelPage = () => {
     fetchChannelInfo();
     fetchProjects();
   }, [userId]);
+
+  useEffect(() => {
+    console.log("Channel state updated:", channel); // Debug log
+  }, [channel]);
 
   const handleProjectClick = (projectId) => {
     navigate(`/project/${projectId}`);

@@ -9,6 +9,7 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
+import UploadIcon from '@mui/icons-material/Upload'; // Import UploadIcon
 import "./Navbar.css";
 import { drawerWidth, collapsedDrawerWidth } from "./Sidebar";
 
@@ -17,17 +18,18 @@ const NavbarContainer = styled('div')(({ theme }) => ({
 }));
 
 const UploadButton = styled(Button)(({ theme }) => ({
-  backgroundColor: theme?.palette?.primary?.main || "#1976d2",
+  backgroundColor: "#000000", // Use hex format for black color
   color: "white",
   marginRight: theme?.spacing(2) || "16px",
+  borderRadius: "20px", // Add cylinder-like shape
   '&:hover': {
-    backgroundColor: theme?.palette?.primary?.dark || "#115293",
+    backgroundColor: alpha("#000000", 0.8), // Use hex format for black color
   },
 }));
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
-  borderRadius: theme.shape.borderRadius,
+  borderRadius: "20px", // Add cylinder-like shape
   backgroundColor: alpha(theme?.palette?.common?.white || "#ffffff", 0.15),
   '&:hover': {
     backgroundColor: alpha(theme?.palette?.common?.white || "#ffffff", 0.25),
@@ -35,6 +37,7 @@ const Search = styled('div')(({ theme }) => ({
   marginRight: theme.spacing(2),
   marginLeft: 0,
   width: '100%',
+  border: '1px solid #000000', // Use hex format for black color
   [theme.breakpoints.up('sm')]: {
     marginLeft: theme.spacing(3),
     width: 'auto',
@@ -52,7 +55,7 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
+  color: 'black', // Change text color to black
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
@@ -111,6 +114,10 @@ const Navbar = ({ toggleTheme, isDarkMode, open, setOpen }) => {
 
   const handleDrawerToggle = () => {
     setOpen(!open);
+  };
+
+  const handleUploadClick = () => {
+    navigate('/upload');
   };
 
   const menuId = 'primary-search-account-menu';
@@ -214,16 +221,23 @@ const Navbar = ({ toggleTheme, isDarkMode, open, setOpen }) => {
           >
             SynCodeX
           </Typography>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon style={{ color: "black" }} />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-          </Search>
-          <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+            <Search>
+              <SearchIconWrapper>
+                <SearchIcon style={{ color: "black" }} />
+              </SearchIconWrapper>
+              <StyledInputBase
+                placeholder="Search…"
+                inputProps={{ 'aria-label': 'search' }}
+              />
+            </Search>
+          </Box>
+          <UploadButton
+            startIcon={<UploadIcon />}
+            onClick={handleUploadClick}
+          >
+            Upload Project
+          </UploadButton>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <IconButton size="large" aria-label="show 4 new mails" sx={{ color: "black" }}>
               <Badge badgeContent={4} color="error">
