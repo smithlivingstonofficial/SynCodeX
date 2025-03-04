@@ -47,7 +47,7 @@ const ProjectCard = ({ project }) => {
   };
 
   return (
-    <Card sx={{ maxWidth: 345, boxShadow: 3, borderRadius: 2, overflow: 'hidden' }}>
+    <Card sx={{ maxWidth: 400, boxShadow: 3, borderRadius: 2, overflow: 'hidden'   }}> {/* Increase the maxWidth and add margin */}
       <CardActionArea onClick={handleProjectClick}>
         <CardMedia
           component="img"

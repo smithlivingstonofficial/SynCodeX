@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db, auth, storage } from "../../firebase/config";
-import { doc as firestoreDoc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, onSnapshot } from "firebase/firestore";
+import { doc as firestoreDoc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, setDoc } from "firebase/firestore";
 import { ref as storageRef, getDownloadURL } from "firebase/storage";
 import { Box, Button, Card, CardContent, CardMedia, Typography, Avatar, IconButton, Container, TextField, Paper, Grid, InputAdornment } from '@mui/material'; // MUI imports
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -20,6 +20,7 @@ const ViewProject = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
   const user = auth.currentUser;
   const userId = user ? user.uid : null;
 
@@ -59,6 +60,13 @@ const ViewProject = () => {
               profilePicture: ownerData.profilePicture || "/default-profile.png", 
               description: ownerData.description || "No description available" 
             });
+
+            // Fetch follow status
+            if (user) {
+              const followerRef = firestoreDoc(db, "users", projectData.ownerId, "followers", user.uid);
+              const followerSnap = await getDoc(followerRef);
+              setIsFollowing(followerSnap.exists());
+            }
           } else {
             console.error("Owner document does not exist");
           }
@@ -168,6 +176,31 @@ const ViewProject = () => {
     navigate(`/channel/${project.ownerId}`);
   };
 
+  const handleFollowClick = async (e) => {
+    e.stopPropagation(); // Prevent navigation to the channel page
+    if (!user) {
+      alert("You must be logged in to follow a channel.");
+      return;
+    }
+  
+    const followerRef = firestoreDoc(db, "users", project.ownerId, "followers", user.uid);
+  
+    try {
+      if (isFollowing) {
+        // If the user is already following, unfollow
+        await deleteDoc(followerRef);
+        setIsFollowing(false);
+      } else {
+        // If the user is not following, follow
+        await setDoc(followerRef, { userId: user.uid });
+        setIsFollowing(true);
+      }
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+      alert("Failed to update follow status. Error: " + error.message);
+    }
+  };
+
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp.seconds * 1000);
     return date.toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -209,6 +242,14 @@ const ViewProject = () => {
                         {channel.description}
                       </Typography>
                     </Box>
+                    <Button 
+                      variant={isFollowing ? "contained" : "outlined"} 
+                      color="primary" 
+                      onClick={handleFollowClick}
+                      sx={{ ml: 2 }}
+                    >
+                      {isFollowing ? "Following" : "Follow"}
+                    </Button>
                   </Box>
                   <Box display="flex" alignItems="center" mb={2}>
                     <IconButton onClick={handleLikeClick} color="primary">

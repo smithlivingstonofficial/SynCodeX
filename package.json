@@ -5,6 +5,8 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@mantine/core": "^7.17.1",
+    "@mantine/hooks": "^7.17.1",
     "@mui/icons-material": "^6.4.5",
     "@mui/material": "^6.4.2",
     "@sendgrid/mail": "^8.1.4",

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { db } from "../../firebase/config";
-import { doc as firestoreDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { Box, Container, Grid, Typography, Card, CardActionArea, CardContent, CardMedia, Avatar } from '@mui/material';
+import { db, auth } from "../../firebase/config";
+import { doc as firestoreDoc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { Box, Container, Grid, Typography, Card, CardActionArea, CardContent, CardMedia, Avatar, Button } from '@mui/material';
 import SideBar from '../Shared/Sidebar';
 import NavBar from '../Shared/Navbar';
 
@@ -11,6 +11,9 @@ const ChannelPage = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [channel, setChannel] = useState({ channelName: "", profilePicture: "", description: "" });
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const user = auth.currentUser;
 
   useEffect(() => {
     const fetchChannelInfo = async () => {
@@ -21,11 +24,18 @@ const ChannelPage = () => {
           const userData = userSnap.data();
           console.log("Fetched channel data:", userData); // Debug log
           setChannel({ channelName: userData.channelName, profilePicture: userData.profilePicture, description: userData.description });
+          if (user) {
+            const followerRef = firestoreDoc(db, "users", userId, "followers", user.uid);
+            const followerSnap = await getDoc(followerRef);
+            setIsFollowing(followerSnap.exists());
+          }
         } else {
           console.error("User document does not exist");
         }
       } catch (error) {
         console.error("Error fetching channel info: ", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -43,7 +53,7 @@ const ChannelPage = () => {
 
     fetchChannelInfo();
     fetchProjects();
-  }, [userId]);
+  }, [userId, user]);
 
   useEffect(() => {
     console.log("Channel state updated:", channel); // Debug log
@@ -52,6 +62,34 @@ const ChannelPage = () => {
   const handleProjectClick = (projectId) => {
     navigate(`/project/${projectId}`);
   };
+
+  const handleFollowClick = async () => {
+    if (!user) {
+      alert("You must be logged in to follow a channel.");
+      return;
+    }
+
+    const followerRef = firestoreDoc(db, "users", userId, "followers", user.uid);
+
+    try {
+      if (isFollowing) {
+        // If the user is already following, unfollow
+        await deleteDoc(followerRef);
+        setIsFollowing(false);
+      } else {
+        // If the user is not following, follow
+        await setDoc(followerRef, { userId: user.uid });
+        setIsFollowing(true);
+      }
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+      alert("Failed to update follow status. Error: " + error.message);
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Box display="flex" mt={13}>
@@ -65,6 +103,14 @@ const ChannelPage = () => {
               <Typography variant="h4">{channel.channelName}</Typography>
               <Typography variant="body2" color="text.secondary">{channel.description}</Typography>
             </Box>
+            <Button 
+              variant={isFollowing ? "contained" : "outlined"} 
+              color="primary" 
+              onClick={handleFollowClick}
+              sx={{ ml: 2 }}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </Button>
           </Box>
           <Typography variant="h5" mb={3}>Channel: {channel.channelName}</Typography>
           <Grid container spacing={3}>

@@ -5,6 +5,12 @@ service cloud.firestore {
     match /channels/{userId} {
       allow read: if true;  // Allow everyone to read the channel details
       allow write: if request.auth != null && request.auth.uid == userId; // Only the owner can write
+
+      // Rules for "followedUsers" subcollection
+      match /channels/{userId}/followedUsers/{followedUserId} {
+        allow read: if request.auth != null; // Allow authenticated users to read followed users
+        allow write: if request.auth != null && request.auth.uid == userId; // Only the owner can write
+      }
     }
 
     // Rules for "projects" collection
@@ -23,9 +29,15 @@ service cloud.firestore {
 
     // Rules for "users" collection (Updated for Channel Page)
     match /users/{userId} {
-      allow read: if request.auth != null || 
-                  resource.data.keys().hasAny(['channelName', 'profilePicture', 'description']);
+      allow read: if true; // Allow everyone to read user details
       allow write: if request.auth != null && request.auth.uid == userId; // Only the owner can write
+      allow update: if request.auth != null && request.auth.uid != userId; // Allow logged-in users to follow other channels
+    }
+
+    // Rules for "followers" subcollection
+    match /users/{userId}/followers/{followerId} {
+      allow read: if request.auth != null; // Allow authenticated users to read followers
+      allow write: if request.auth != null; // Allow authenticated users to follow/unfollow
     }
 
     // Rules for "notifications" collection

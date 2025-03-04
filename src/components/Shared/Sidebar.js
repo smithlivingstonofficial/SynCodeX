@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, List, ListItem, ListItemIcon, ListItemText, Drawer, Divider, IconButton, Tooltip } from "@mui/material";
-import { Home as HomeIcon, Dashboard as DashboardIcon, Work as WorkIcon, People as PeopleIcon, Code as CodeIcon, BarChart as BarChartIcon, Settings as SettingsIcon, ChevronLeft as ChevronLeftIcon, ChevronRight as ChevronRightIcon, Menu as MenuIcon } from "@mui/icons-material";
+import { Box, List, ListItem, ListItemIcon, ListItemText, Drawer, Divider, Tooltip } from "@mui/material";
+import { Home as HomeIcon, Dashboard as DashboardIcon, Work as WorkIcon, People as PeopleIcon, Code as CodeIcon, BarChart as BarChartIcon, Settings as SettingsIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import "./Sidebar.css";
 
 export const drawerWidth = 240;
 export const collapsedDrawerWidth = 60;
 
-const Sidebar = ({ open, setOpen }) => {
+const Sidebar = ({ open }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -21,10 +21,6 @@ const Sidebar = ({ open, setOpen }) => {
     { name: "Analytics", path: "/analytics", icon: <BarChartIcon /> },
     { name: "Settings", path: "/settings", icon: <SettingsIcon /> },
   ];
-
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -43,11 +39,6 @@ const Sidebar = ({ open, setOpen }) => {
           },
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", padding: theme.spacing(0, 1), justifyContent: "flex-end" }}>
-          <IconButton onClick={handleDrawerToggle}>
-            {open ? <ChevronLeftIcon /> : <MenuIcon />}
-          </IconButton>
-        </Box>
         <Divider />
         <List>
           {menuItems.map((item, index) => (
