@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useSidebar } from '../contexts/SidebarContext';
 
 export default function Channel() {
   const { username } = useParams();
-  const [profile, setProfile] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { isCollapsed } = useSidebar();
   const db = getFirestore();
 
   useEffect(() => {
@@ -33,23 +35,27 @@ export default function Channel() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-64'} flex items-center justify-center transition-all duration-300`}>
+        <l-jelly-triangle
+          size="40"
+          speed="1.75"
+          color="white"
+        ></l-jelly-triangle>
       </div>
     );
   }
 
-  if (!profile) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-64'} flex items-center justify-center transition-all duration-300`}>
         <div className="text-white">User not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64">
-      <div className="max-w-4xl mx-auto p-8">
+    <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-64'} transition-all duration-300`}>
+      <div className="max-w-7xl mx-auto p-8">
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center space-x-6 mb-6">
             {profile.photoURL ? (

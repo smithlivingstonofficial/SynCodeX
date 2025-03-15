@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth } from '../firebase';
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import { jellyTriangle } from 'ldrs';
+import { useSidebar } from '../contexts/SidebarContext';
+
+jellyTriangle.register();
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState(null);
+  const { isCollapsed } = useSidebar();
   const db = getFirestore();
 
   useEffect(() => {
@@ -50,14 +55,18 @@ export default function Projects() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-80'} flex items-center justify-center transition-all duration-300`}>
+        <l-jelly-triangle
+          size="40"
+          speed="1.75"
+          color="white"
+        ></l-jelly-triangle>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64">
+    <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-80'} transition-all duration-300`}>
       <div className="max-w-7xl mx-auto p-8">
         <h1 className="text-2xl font-bold text-white mb-8">My Projects</h1>
         

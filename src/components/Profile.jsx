@@ -4,6 +4,9 @@ import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } 
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
+import { jellyTriangle } from 'ldrs';
+
+jellyTriangle.register();
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -156,7 +159,11 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <l-jelly-triangle
+          size="40"
+          speed="1.75"
+          color="white"
+        ></l-jelly-triangle>
       </div>
     );
   }

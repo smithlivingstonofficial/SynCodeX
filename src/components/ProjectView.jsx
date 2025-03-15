@@ -2,51 +2,58 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { BsDownload, BsGlobe } from 'react-icons/bs';
+import { jellyTriangle } from 'ldrs';
+import { useSidebar } from '../contexts/SidebarContext';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebase';
+
+jellyTriangle.register();
 
 export default function ProjectView() {
-  const { username } = useParams();
+  const { projectId } = useParams();
   const [project, setProject] = useState(null);
+  const [channelInfo, setChannelInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isCollapsed } = useSidebar();
+  const navigate = useNavigate();
+  const user = auth.currentUser;
 
   useEffect(() => {
-    const fetchProject = async () => {
-      if (!username) return;
+    const fetchProjectAndChannel = async () => {
+      if (!projectId) return;
 
       try {
         const db = getFirestore();
+        const projectRef = doc(db, 'projects', projectId);
+        const projectSnap = await getDoc(projectRef);
         
-        // First, find the user's profile to get their userId
-        const profilesRef = collection(db, 'profiles');
-        const q = query(profilesRef, where('username', '==', username));
-        const profileSnapshot = await getDocs(q);
-        
-        if (profileSnapshot.empty) {
-          setError('User not found');
-          setLoading(false);
+        if (!projectSnap.exists()) {
+          setError('Project not found');
           return;
         }
 
-        const userId = profileSnapshot.docs[0].id;
-        
-        // Then, fetch their projects
-        const projectsRef = collection(db, 'projects');
-        const projectQuery = query(projectsRef, where('userId', '==', userId));
-        const projectSnapshot = await getDocs(projectQuery);
-        
-        if (projectSnapshot.empty) {
-          setError('No projects found');
-          setLoading(false);
-          return;
-        }
-
-        // Get the first project (or you could add additional logic to get a specific project)
         const projectData = {
-          id: projectSnapshot.docs[0].id,
-          ...projectSnapshot.docs[0].data()
+          id: projectSnap.id,
+          ...projectSnap.data()
         };
 
+        // Check project visibility
+        if (projectData.visibility === 'private' && (!user || user.uid !== projectData.userId)) {
+          setError('You do not have permission to view this project');
+          return;
+        }
+
         setProject(projectData);
+
+        // Fetch channel info
+        if (projectData.userId) {
+          const channelRef = doc(db, 'profiles', projectData.userId);
+          const channelSnap = await getDoc(channelRef);
+          if (channelSnap.exists()) {
+            setChannelInfo(channelSnap.data());
+          }
+        }
       } catch (error) {
         console.error('Error fetching project:', error);
         setError('Failed to load project');
@@ -55,20 +62,30 @@ export default function ProjectView() {
       }
     };
 
-    fetchProject();
-  }, [username]);
+    fetchProjectAndChannel();
+  }, [projectId, user]);
+
+  const handleChannelClick = () => {
+    if (channelInfo?.username) {
+      navigate(`/channel/${channelInfo.username}`);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-80'} flex items-center justify-center transition-all duration-300`}>
+        <l-jelly-triangle
+          size="40"
+          speed="1.75"
+          color="white"
+        ></l-jelly-triangle>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-64'} flex items-center justify-center transition-all duration-300`}>
         <div className="text-red-500">{error}</div>
       </div>
     );
@@ -76,26 +93,26 @@ export default function ProjectView() {
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-64'} flex items-center justify-center transition-all duration-300`}>
         <div className="text-white">Project not found</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64">
+    <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-80'} transition-all duration-300`}>
       <div className="max-w-7xl mx-auto p-8">
         <div className="bg-gray-800 rounded-lg overflow-hidden">
           {/* Project Header */}
-          <div className="relative h-64">
+          <div className="relative h-0 pb-[56.25%]">
             {project.thumbnailUrl ? (
               <img
                 src={project.thumbnailUrl}
                 alt={project.title}
-                className="w-full h-full object-cover"
+                className="absolute top-0 left-0 w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+              <div className="absolute top-0 left-0 w-full h-full bg-gray-700 flex items-center justify-center">
                 <span className="text-gray-400 text-xl">No thumbnail</span>
               </div>
             )}
@@ -104,7 +121,32 @@ export default function ProjectView() {
           {/* Project Info */}
           <div className="p-8">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold text-white">{project.title}</h1>
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-4">{project.title}</h1>
+                {/* Channel Info */}
+                <div 
+                  className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={handleChannelClick}
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-700">
+                    {channelInfo?.photoURL ? (
+                      <img
+                        src={channelInfo.photoURL}
+                        alt={channelInfo?.displayName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-600 flex items-center justify-center text-gray-400">
+                        {channelInfo?.displayName?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-white font-medium">{channelInfo?.displayName || 'Unknown User'}</h3>
+                    <p className="text-gray-400 text-sm">@{channelInfo?.username}</p>
+                  </div>
+                </div>
+              </div>
               <span className={`px-3 py-1 rounded-full ${project.visibility === 'public' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                 {project.visibility}
               </span>

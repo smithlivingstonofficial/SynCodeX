@@ -3,6 +3,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
+import { useSidebar } from '../contexts/SidebarContext';
 
 export default function Upload() {
   const navigate = useNavigate();
@@ -104,8 +105,10 @@ export default function Upload() {
     }
   };
 
+  const { isCollapsed } = useSidebar();
+
   return (
-    <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64">
+    <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-64'} transition-all duration-300`}>
       <div className="max-w-4xl mx-auto p-8">
         <div className="bg-gray-800 rounded-lg p-6">
           <h1 className="text-2xl font-bold text-white mb-6">Upload Project</h1>
