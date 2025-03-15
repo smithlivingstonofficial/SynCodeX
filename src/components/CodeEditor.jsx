@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useSidebar } from '../contexts/SidebarContext';
-import { BsTerminal, BsFolder, BsSearch, BsGear, BsCode, BsChevronRight, BsChevronDown, BsFileEarmark } from 'react-icons/bs';
+import { BsTerminal, BsFolder, BsSearch, BsGear, BsCode, BsChevronRight, BsChevronDown, BsFileEarmark, BsPlus, BsFolderPlus, BsArrowClockwise, BsArrowsExpand, BsArrowsCollapse } from 'react-icons/bs';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import JSZip from 'jszip';
@@ -25,6 +25,11 @@ export default function CodeEditor() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [expandedFolders, setExpandedFolders] = useState(new Set());
   const [error, setError] = useState(null);
+  const [showNewFileModal, setShowNewFileModal] = useState(false);
+  const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+  const [newFileName, setNewFileName] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [currentPath, setCurrentPath] = useState('');
 
   useEffect(() => {
     if (projectId) {
@@ -316,12 +321,51 @@ export default function CodeEditor() {
 
   return (
     <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-80'} transition-all duration-300`}>
+      {showNewFileModal && <NewFileModal />}
+      {showNewFolderModal && <NewFolderModal />}
       <div className="flex h-[calc(100vh-4rem)]">
         {/* File Explorer */}
         <div className="w-64 bg-gray-900 border-r border-gray-800 overflow-y-auto">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-white font-semibold">Files</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowNewFileModal(true)}
+                  className="p-1.5 text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"
+                  title="New File"
+                >
+                  <BsPlus size={18} />
+                </button>
+                <button
+                  onClick={() => setShowNewFolderModal(true)}
+                  className="p-1.5 text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"
+                  title="New Folder"
+                >
+                  <BsFolderPlus size={18} />
+                </button>
+                <button
+                  onClick={handleRefreshExplorer}
+                  className="p-1.5 text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"
+                  title="Refresh Explorer"
+                >
+                  <BsArrowClockwise size={18} />
+                </button>
+                <button
+                  onClick={handleExpandAll}
+                  className="p-1.5 text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"
+                  title="Expand All"
+                >
+                  <BsArrowsExpand size={18} />
+                </button>
+                <button
+                  onClick={handleCollapseAll}
+                  className="p-1.5 text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"
+                  title="Collapse All"
+                >
+                  <BsArrowsCollapse size={18} />
+                </button>
+              </div>
             </div>
             {error ? (
               <div className="text-red-500 text-sm">{error}</div>
@@ -355,3 +399,112 @@ export default function CodeEditor() {
     </div>
   );
 }
+
+
+const NewFileModal = () => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-gray-800 p-6 rounded-lg w-96">
+      <h3 className="text-white text-lg font-medium mb-4">Create New File</h3>
+      <input
+        type="text"
+        value={newFileName}
+        onChange={(e) => setNewFileName(e.target.value)}
+        placeholder="Enter file name"
+        className="w-full p-2 mb-4 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+      />
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowNewFileModal(false)}
+          className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleCreateFile}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const NewFolderModal = () => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-gray-800 p-6 rounded-lg w-96">
+      <h3 className="text-white text-lg font-medium mb-4">Create New Folder</h3>
+      <input
+        type="text"
+        value={newFolderName}
+        onChange={(e) => setNewFolderName(e.target.value)}
+        placeholder="Enter folder name"
+        className="w-full p-2 mb-4 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+      />
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowNewFolderModal(false)}
+          className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleCreateFolder}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+
+const handleCreateFile = () => {
+  if (!newFileName.trim()) return;
+  const newPath = currentPath ? `${currentPath}/${newFileName}` : newFileName;
+  const newFile = {
+    path: newPath,
+    name: newFileName,
+    content: '',
+    extension: newFileName.split('.').pop()?.toLowerCase() || '',
+    folder: currentPath,
+    language: getLanguageFromExtension(newFileName.split('.').pop()?.toLowerCase() || '')
+  };
+  setProjectFiles([...projectFiles, newFile]);
+  setNewFileName('');
+  setShowNewFileModal(false);
+};
+
+const handleCreateFolder = () => {
+  if (!newFolderName.trim()) return;
+  const newPath = currentPath ? `${currentPath}/${newFolderName}` : newFolderName;
+  setExpandedFolders(new Set([...expandedFolders, newPath]));
+  setNewFolderName('');
+  setShowNewFolderModal(false);
+};
+
+const handleRefreshExplorer = () => {
+  if (projectId) {
+    loadProjectFiles(projectId);
+  }
+};
+
+const handleExpandAll = () => {
+  const allFolders = new Set();
+  projectFiles.forEach(file => {
+    if (file.folder) {
+      const parts = file.folder.split('/');
+      let path = '';
+      parts.forEach(part => {
+        path = path ? `${path}/${part}` : part;
+        allFolders.add(path);
+      });
+    }
+  });
+  setExpandedFolders(allFolders);
+};
+
+const handleCollapseAll = () => {
+  setExpandedFolders(new Set());
+};
