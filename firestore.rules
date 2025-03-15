@@ -69,7 +69,7 @@ service cloud.firestore {
       allow update: if isAuthenticated()
         && (isOwner(resource.data.userId)
             || (resource.data.visibility == 'public'
-                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'comments'])))
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])))
         && isValidProjectData();
       
       allow delete: if isOwner(resource.data.userId);

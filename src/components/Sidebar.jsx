@@ -12,7 +12,7 @@ export default function Sidebar() {
   const menuItems = [
     { path: '/', icon: AiFillHome, label: 'Home' },
     { path: '/projects', icon: FaProjectDiagram, label: 'Projects' },
-    { path: '/code', icon: FaCode, label: 'Code' },
+    { path: '/editor', icon: FaCode, label: 'Editor' },
     { path: '/history', icon: MdHistory, label: 'History' },
     { path: '/favorites', icon: MdFavorite, label: 'Favorites' },
     { path: '/settings', icon: AiFillSetting, label: 'Settings' },
@@ -21,7 +21,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0f0f0f] border-r border-gray-800 z-40 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-80'}">
+      <aside className="hidden md:block fixed left-0 top-16 h-[calc(100vh-4rem)] bg-[#0f0f0f] border-r border-gray-800 z-40 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-20'}">
         <div className="p-4">
           <ul className="space-y-2">
             {menuItems.map((item) => {

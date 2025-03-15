@@ -48,6 +48,8 @@ export default function Profile() {
             photoURL: user.photoURL,
             bio: '',
             website: '',
+            followers: [],
+            following: [],
             // Contact & Social Links
             phone: '',
             githubProfile: '',
