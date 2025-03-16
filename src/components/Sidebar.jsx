@@ -4,10 +4,20 @@ import { FaCode, FaProjectDiagram } from 'react-icons/fa';
 import { BsChevronLeft, BsChevronRight } from 'react-icons/bs';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../contexts/SidebarContext';
+import { auth } from '../firebase';
+import { useEffect, useState } from 'react';
 
 export default function Sidebar() {
   const location = useLocation();
   const { isCollapsed, setIsCollapsed } = useSidebar();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const menuItems = [
     { path: '/', icon: AiFillHome, label: 'Home' },
@@ -16,6 +26,15 @@ export default function Sidebar() {
     { path: '/history', icon: MdHistory, label: 'History' },
     { path: '/favorites', icon: MdFavorite, label: 'Favorites' },
     { path: '/settings', icon: AiFillSetting, label: 'Settings' },
+  ];
+
+  // Mobile menu items (without Favorites)
+  const mobileMenuItems = [
+    menuItems[0], // Home
+    menuItems[1], // Projects
+    null, // Center position for profile
+    menuItems[3], // History
+    menuItems[5], // Settings
   ];
 
   return (
@@ -55,7 +74,31 @@ export default function Sidebar() {
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f0f0f] border-t border-gray-800 z-40">
         <ul className="flex justify-around items-center h-16">
-          {menuItems.slice(0, 5).map((item) => {
+          {mobileMenuItems.map((item, index) => {
+            if (index === 2) { // Center position for profile
+              return (
+                <li key="profile" className="relative">
+                  <Link
+                    to="/profile"
+                    className="flex flex-col items-center justify-center"
+                  >
+                    {user && user.photoURL ? (
+                      <img
+                        src={user.photoURL}
+                        alt="Profile"
+                        className="w-10 h-10 rounded-full border-2 border-blue-500"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-white border-2 border-blue-500">
+                        {user?.email?.[0].toUpperCase() || 'U'}
+                      </div>
+                    )}
+                    <span className="text-xs mt-1 text-white">Profile</span>
+                  </Link>
+                </li>
+              );
+            }
+            
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
 
