@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion, arrayRemove, onSnapshot, runTransaction } from 'firebase/firestore';
 import { useSidebar } from '../contexts/SidebarContext';
 import { jellyTriangle } from 'ldrs';
+import { auth } from '../firebase';
 
 jellyTriangle.register();
 
@@ -11,9 +12,12 @@ export default function Channel() {
   const [profile, setProfile] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
   const { isCollapsed } = useSidebar();
   const navigate = useNavigate();
   const db = getFirestore();
+  const user = auth.currentUser;
 
   useEffect(() => {
     const fetchProfileAndProjects = async () => {
@@ -26,7 +30,18 @@ export default function Channel() {
         if (!querySnapshot.empty) {
           const profileData = querySnapshot.docs[0].data();
           const userId = querySnapshot.docs[0].id;
-          setProfile(profileData);
+          setProfile({ ...profileData, id: userId });
+
+          // Set up real-time listener for follower count
+          const profileDoc = doc(db, 'profiles', userId);
+          const unsubscribe = onSnapshot(profileDoc, (doc) => {
+            if (doc.exists()) {
+              setFollowerCount(doc.data().followers?.length || 0);
+              if (user) {
+                setIsFollowing(doc.data().followers?.includes(user.uid));
+              }
+            }
+          });
 
           // Fetch user's public projects
           const projectsRef = collection(db, 'projects');
@@ -41,6 +56,8 @@ export default function Channel() {
             ...doc.data()
           }));
           setProjects(projectsData);
+
+          return unsubscribe;
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -52,7 +69,53 @@ export default function Channel() {
     if (username) {
       fetchProfileAndProjects();
     }
-  }, [username, db]);
+  }, [username, db, user?.uid]);
+
+  const handleFollow = async () => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    if (!profile?.id) return;
+
+    try {
+      const db = getFirestore();
+      const profileRef = doc(db, 'profiles', profile.id);
+      
+      // Optimistically update UI
+      setIsFollowing(!isFollowing);
+      setFollowerCount(prevCount => isFollowing ? prevCount - 1 : prevCount + 1);
+      
+      // Start a transaction to ensure atomic updates
+      await runTransaction(db, async (transaction) => {
+        const profileDoc = await transaction.get(profileRef);
+        if (!profileDoc.exists()) {
+          throw new Error('Profile not found');
+        }
+
+        const currentFollowers = profileDoc.data().followers || [];
+        const isCurrentlyFollowing = currentFollowers.includes(user.uid);
+
+        if (isCurrentlyFollowing) {
+          transaction.update(profileRef, {
+            followers: arrayRemove(user.uid)
+          });
+        } else {
+          transaction.update(profileRef, {
+            followers: arrayUnion(user.uid)
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      // Revert optimistic UI updates
+      setIsFollowing(isFollowing);
+      setFollowerCount(prevCount => isFollowing ? prevCount + 1 : prevCount - 1);
+      // Show error message to user
+      alert('Failed to update follow status. Please try again.');
+    }
+  };
 
   const handleProjectClick = (projectId) => {
     navigate(`/project/${projectId}`);
@@ -113,10 +176,21 @@ export default function Channel() {
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-2">{profile.displayName}</h1>
               <p className="text-gray-400 mb-4">@{profile.username}</p>
-              <div className="flex flex-wrap gap-4 text-gray-400">
-                <span>{projects.length} Projects</span>
-                {profile.company && <span>• {profile.company}</span>}
-                {profile.role && <span>• {profile.role}</span>}
+              <div className="flex items-center gap-4">
+                <div className="flex flex-wrap gap-4 text-gray-400">
+                  <span>{projects.length} Projects</span>
+                  <span>• {followerCount} {followerCount === 1 ? 'Follower' : 'Followers'}</span>
+                  {profile.company && <span>• {profile.company}</span>}
+                  {profile.role && <span>• {profile.role}</span>}
+                </div>
+                {user && user.uid !== profile.id && (
+                  <button
+                    onClick={handleFollow}
+                    className={`px-4 py-2 rounded-full font-medium transition-all ${isFollowing ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-white hover:bg-gray-100 text-black'}`}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                )}
               </div>
             </div>
           </div>

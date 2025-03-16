@@ -30,6 +30,31 @@ service cloud.firestore {
       return fileUrl == null || fileUrl.size() <= 500;
     }
 
+    function isValidFollowerUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      let followersChange = diff.affectedKeys().hasOnly(['followers']);
+      let followersArray = request.resource.data.followers;
+      
+      return followersChange && 
+             followersArray is list && 
+             followersArray.size() <= 1000 &&
+             isAuthenticated();  // Only require authentication for follower updates
+    }
+
+    function isValidFollowingUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      let followingChange = diff.affectedKeys().hasOnly(['following']);
+      let followingArray = request.resource.data.following;
+      let oldFollowingArray = resource.data.following;
+      
+      return followingChange && 
+             followingArray is list && 
+             followingArray.size() <= 1000 &&
+             (followingArray.size() == oldFollowingArray.size() + 1 || 
+              followingArray.size() == oldFollowingArray.size() - 1) && 
+             followingArray.removeAll(oldFollowingArray).size() <= 1;
+    }
+
     // Rate limiting function - 100 writes per hour per user
     function isNotRateLimited() {
       let hourAgo = request.time.toMillis() - duration.value(1, 'h');
@@ -44,13 +69,14 @@ service cloud.firestore {
     // Profiles collection rules
     match /profiles/{userId} {
       allow read: if true;
-      allow create: if isOwner(userId)
-        && isValidUsername(request.resource.data.username)
-        && hasValidFileSize(request.resource.data.photoURL);
-      allow update: if isOwner(userId)
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['username'])
-            || isValidUsername(request.resource.data.username));
-      allow delete: if isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) &&
+        request.resource.data.followers is list &&
+        request.resource.data.following is list &&
+        request.resource.data.followers.size() == 0 &&
+        request.resource.data.following.size() == 0;
+      allow update: if isAuthenticated() && 
+        (isOwner(userId) || isValidFollowerUpdate() || isValidFollowingUpdate());
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
 
     // Projects collection rules with enhanced security
@@ -68,7 +94,7 @@ service cloud.firestore {
         && isNotRateLimited()
         && request.resource.data.userId == request.auth.uid;
       
-      allow update: if true
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
       
       allow delete: if isOwner(resource.data.userId);
 
@@ -89,12 +115,16 @@ service cloud.firestore {
 
       match /followers/{followerId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow write: if isAuthenticated() && 
+          (followerId == request.auth.uid) &&
+          (request.method == 'create' || request.method == 'delete');
       }
 
       match /following/{followingId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow write: if isAuthenticated() && 
+          (followingId == request.auth.uid) &&
+          (request.method == 'create' || request.method == 'delete');
       }
     }
 
