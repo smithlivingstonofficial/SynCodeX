@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, addDoc, query, where, orderBy, onSnapshot, runTransaction } from 'firebase/firestore';
 import { BsDownload, BsGlobe, BsHeart, BsHeartFill, BsCode } from 'react-icons/bs';
 import { jellyTriangle } from 'ldrs';
 import { useSidebar } from '../contexts/SidebarContext';
@@ -22,6 +22,8 @@ export default function ProjectView() {
   const [comments, setComments] = useState([]);
   const [isLiked, setIsLiked] = useState(false);
   const [commentError, setCommentError] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
 
   useEffect(() => {
     if (!projectId) return;
@@ -58,7 +60,12 @@ export default function ProjectView() {
           const channelRef = doc(db, 'profiles', projectData.userId);
           const channelSnap = await getDoc(channelRef);
           if (channelSnap.exists()) {
-            setChannelInfo(channelSnap.data());
+            const channelData = channelSnap.data();
+            setChannelInfo(channelData);
+            setFollowerCount(channelData.followers?.length || 0);
+            if (user) {
+              setIsFollowing(channelData.followers?.includes(user.uid));
+            }
           }
         } catch (error) {
           console.error('Error fetching channel info:', error);
@@ -139,6 +146,52 @@ export default function ProjectView() {
   const handleChannelClick = () => {
     if (channelInfo?.username) {
       navigate(`/channel/${channelInfo.username}`);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    if (!channelInfo?.id) return;
+
+    try {
+      const db = getFirestore();
+      const profileRef = doc(db, 'profiles', project.userId);
+      
+      // Optimistically update UI
+      setIsFollowing(!isFollowing);
+      setFollowerCount(prevCount => isFollowing ? prevCount - 1 : prevCount + 1);
+      
+      // Start a transaction to ensure atomic updates
+      await runTransaction(db, async (transaction) => {
+        const profileDoc = await transaction.get(profileRef);
+        if (!profileDoc.exists()) {
+          throw new Error('Profile not found');
+        }
+
+        const currentFollowers = profileDoc.data().followers || [];
+        const isCurrentlyFollowing = currentFollowers.includes(user.uid);
+
+        if (isCurrentlyFollowing) {
+          transaction.update(profileRef, {
+            followers: arrayRemove(user.uid)
+          });
+        } else {
+          transaction.update(profileRef, {
+            followers: arrayUnion(user.uid)
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error updating follow status:', error);
+      // Revert optimistic UI updates
+      setIsFollowing(isFollowing);
+      setFollowerCount(prevCount => isFollowing ? prevCount + 1 : prevCount - 1);
+      // Show error message to user
+      alert('Failed to update follow status. Please try again.');
     }
   };
 
@@ -257,9 +310,23 @@ export default function ProjectView() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <h3 className="text-white font-medium">{channelInfo?.displayName || 'Unknown User'}</h3>
-                        <p className="text-gray-400 text-sm">@{channelInfo?.username}</p>
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <h3 className="text-white font-medium">{channelInfo?.displayName || 'Unknown User'}</h3>
+                          <p className="text-gray-400 text-sm">@{channelInfo?.username}</p>
+                        </div>
+                        {user && user.uid !== project.userId && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFollow();
+                            }}
+                            className={`px-4 py-2 rounded-full font-medium transition-all ${isFollowing ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-white hover:bg-gray-100 text-black'}`}
+                          >
+                            {isFollowing ? 'Following' : 'Follow'}
+                          </button>
+                        )}
+                        <span className="text-gray-400">{followerCount} {followerCount === 1 ? 'Follower' : 'Followers'}</span>
                       </div>
                     </div>
                   </div>
