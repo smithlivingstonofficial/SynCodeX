@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Allow read access to all files
+      allow read: if true;
+      
+      // Allow write access only to authenticated users
+      allow write: if request.auth != null
+        // Limit file size to 50MB
+        && request.resource.size <= 50 * 1024 * 1024
+        // Only allow certain content types
+        && (request.resource.contentType.matches('application/.*')
+            || request.resource.contentType.matches('text/.*')
+            || request.resource.contentType.matches('image/.*'))
+        // Rate limit uploads
+        && request.time > resource.metadata.timeCreated + duration.value(1, 's');
+    }
+    
+    // Specific rules for project files
+    match /projects/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size <= 50 * 1024 * 1024;
+    }
+    
+    // Specific rules for thumbnails
+    match /thumbnails/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

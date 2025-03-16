@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { useSidebar } from '../contexts/SidebarContext';
 export default function Upload() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -59,7 +60,47 @@ export default function Upload() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!auth.currentUser) {
-      alert('Please login to upload projects');
+      setError('Please login to upload projects');
+      return;
+    }
+
+    // Reset error state
+    setError(null);
+
+    // Validate file size and type
+    if (formData.sourceCode && formData.sourceCode.size > 50 * 1024 * 1024) {
+      setError('Source code file size must be less than 50MB');
+      return;
+    }
+
+    if (formData.thumbnail && formData.thumbnail.size > 5 * 1024 * 1024) {
+      setError('Thumbnail file size must be less than 5MB');
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.title.trim()) {
+      setError('Project title is required');
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setError('Project description is required');
+      return;
+    }
+
+    if (!formData.programmingLanguages.trim()) {
+      setError('Programming languages are required');
+      return;
+    }
+
+    if (!formData.sourceCode) {
+      setError('Source code file is required');
+      return;
+    }
+
+    if (formData.visibility === 'private' && !formData.password) {
+      setError('Password is required for private projects');
       return;
     }
 
@@ -67,39 +108,84 @@ export default function Upload() {
       setLoading(true);
       const storage = getStorage();
       const db = getFirestore();
+      let sourceCodeUrl = null;
+      let thumbnailUrl = null;
+      let sourceCodeRef = null;
+      let thumbnailRef = null;
 
       // Upload source code file
-      const sourceCodeRef = ref(storage, `projects/${auth.currentUser.uid}/${formData.sourceCode.name}`);
-      await uploadBytes(sourceCodeRef, formData.sourceCode);
-      const sourceCodeUrl = await getDownloadURL(sourceCodeRef);
+      if (formData.sourceCode) {
+        sourceCodeRef = ref(storage, `projects/${auth.currentUser.uid}/${Date.now()}_${formData.sourceCode.name}`);
+        try {
+          await uploadBytes(sourceCodeRef, formData.sourceCode);
+          sourceCodeUrl = await getDownloadURL(sourceCodeRef);
+        } catch (error) {
+          console.error('Error uploading source code:', error);
+          throw new Error('Failed to upload source code file. Please try again.');
+        }
+      }
 
       // Upload thumbnail if provided
-      let thumbnailUrl = null;
       if (formData.thumbnail) {
-        const thumbnailRef = ref(storage, `thumbnails/${auth.currentUser.uid}/${formData.thumbnail.name}`);
-        await uploadBytes(thumbnailRef, formData.thumbnail);
-        thumbnailUrl = await getDownloadURL(thumbnailRef);
+        thumbnailRef = ref(storage, `thumbnails/${auth.currentUser.uid}/${Date.now()}_${formData.thumbnail.name}`);
+        try {
+          await uploadBytes(thumbnailRef, formData.thumbnail);
+          thumbnailUrl = await getDownloadURL(thumbnailRef);
+        } catch (error) {
+          // Clean up the source code file if thumbnail upload fails
+          if (sourceCodeRef) {
+            try {
+              await deleteObject(sourceCodeRef);
+            } catch (cleanupError) {
+              console.error('Error cleaning up source code file:', cleanupError);
+            }
+          }
+          console.error('Error uploading thumbnail:', error);
+          throw new Error('Failed to upload thumbnail. Please try again.');
+        }
       }
 
       // Save project metadata to Firestore
-      const projectData = {
-        userId: auth.currentUser.uid,
-        title: formData.title,
-        description: formData.description,
-        programmingLanguages: formData.programmingLanguages.split(',').map(lang => lang.trim()),
-        sourceCodeUrl,
-        thumbnailUrl,
-        visibility: formData.visibility,
-        password: formData.visibility === 'private' ? formData.password : null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      try {
+        const projectData = {
+          userId: auth.currentUser.uid,
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          programmingLanguages: formData.programmingLanguages.split(',').map(lang => lang.trim()).filter(Boolean),
+          sourceCodeUrl,
+          thumbnailUrl,
+          visibility: formData.visibility,
+          password: formData.visibility === 'private' ? formData.password : null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          likes: [],
+          downloads: 0
+        };
 
-      await addDoc(collection(db, 'projects'), projectData);
-      navigate('/profile');
+        await addDoc(collection(db, 'projects'), projectData);
+        navigate('/profile');
+      } catch (error) {
+        // Clean up uploaded files if Firestore save fails
+        if (sourceCodeRef) {
+          try {
+            await deleteObject(sourceCodeRef);
+          } catch (cleanupError) {
+            console.error('Error cleaning up source code file:', cleanupError);
+          }
+        }
+        if (thumbnailRef) {
+          try {
+            await deleteObject(thumbnailRef);
+          } catch (cleanupError) {
+            console.error('Error cleaning up thumbnail file:', cleanupError);
+          }
+        }
+        console.error('Error saving project data:', error);
+        throw new Error('Failed to save project information. Please try again.');
+      }
     } catch (error) {
       console.error('Error uploading project:', error);
-      alert('Failed to upload project. Please try again.');
+      setError(error.message || 'Failed to upload project. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -112,6 +198,12 @@ export default function Upload() {
       <div className="max-w-4xl mx-auto p-8">
         <div className="bg-gray-800 rounded-lg p-6">
           <h1 className="text-2xl font-bold text-white mb-6">Upload Project</h1>
+          
+          {error && (
+            <div className="bg-red-500 bg-opacity-20 border border-red-500 text-red-500 px-4 py-3 rounded mb-6">
+              {error}
+            </div>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex gap-6">
@@ -224,21 +316,21 @@ export default function Upload() {
             </div>
 
             <div>
-              <label className="block text-white mb-2">Source Code File</label>
+              <label className="block text-white mb-2">Source Code</label>
               <input
                 type="file"
                 name="sourceCode"
                 onChange={handleFileChange}
+                accept=".zip,.rar,.7z,.txt,.js,.jsx,.py,.java,.cpp,.c,.html,.css"
                 required
-                accept=".zip,.rar,.7zip,.txt,.js,.py,.java,.cpp,.c,.html,.css"
-                className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600"
+                className="w-full px-4 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:bg-gray-500"
+              className={`w-full py-3 rounded-md font-semibold ${loading ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'} text-white transition-colors`}
             >
               {loading ? 'Uploading...' : 'Upload Project'}
             </button>

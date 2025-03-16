@@ -174,7 +174,7 @@ export default function ProjectView() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-80'} flex items-center justify-center transition-all duration-300`}>
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-16' : 'pl-64'} flex items-center justify-center transition-all duration-300`}>
         <l-jelly-triangle
           size="40"
           speed="1.75"

@@ -5,6 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { updateProfile } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { jellyTriangle } from 'ldrs';
+import { signOut } from 'firebase/auth';
 
 jellyTriangle.register();
 
@@ -102,19 +103,47 @@ export default function Profile() {
   };
 
   const [usernameError, setUsernameError] = useState(false);
-  const handleInputChange = (field, value) => {
+  const [usernameSuggestions, setUsernameSuggestions] = useState([]);
+  const handleInputChange = async (field, value) => {
     setEditedProfile(prev => ({
       ...prev,
       [field]: value
     }));
     
     if (field === 'username') {
-      checkUsernameAvailability(value).then(isAvailable => {
-        setUsernameError(!isAvailable);
-      });
+      const isAvailable = await checkUsernameAvailability(value);
+      setUsernameError(!isAvailable);
+  
+      // Generate username suggestions when display name changes
+      if (field === 'displayName') {
+        const suggestions = await generateUsernameSuggestions(value);
+        setUsernameSuggestions(suggestions);
+      }
     }
   };
-
+  
+  const generateUsernameSuggestions = async (displayName) => {
+    if (!displayName) return [];
+    
+    const baseUsername = displayName.toLowerCase().replace(/\s+/g, '');
+    const suggestions = [
+      baseUsername,
+      `${baseUsername}${Math.floor(Math.random() * 100)}`,
+      `${baseUsername}_${Math.floor(Math.random() * 100)}`,
+      `${baseUsername}${new Date().getFullYear()}`,
+      `${baseUsername}_dev`
+    ];
+  
+    // Filter out unavailable usernames
+    const availableSuggestions = [];
+    for (const suggestion of suggestions) {
+      if (await checkUsernameAvailability(suggestion)) {
+        availableSuggestions.push(suggestion);
+      }
+    }
+  
+    return availableSuggestions;
+  };
   const generateUsername = (displayName) => {
     return displayName.toLowerCase().replace(/\s+/g, '');
   };
@@ -160,7 +189,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-16 flex items-center justify-center">
         <l-jelly-triangle
           size="40"
           speed="1.75"
@@ -212,11 +241,11 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-64">
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-gray-800 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-6">
+    <div className="min-h-screen bg-[#0f0f0f] pt-16 pl-0 md:pl-64">
+      <div className="max-w-4xl mx-auto p-4 md:p-8">
+        <div className="bg-gray-800 rounded-lg p-4 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 space-y-4 md:space-y-0">
+            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
               <div className="relative">
                 {uploading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
@@ -227,12 +256,12 @@ export default function Profile() {
                   <img
                     src={currentProfile.photoURL}
                     alt="Profile"
-                    className="w-24 h-24 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={handleProfilePictureClick}
                   />
                 ) : (
                   <div
-                    className="w-24 h-24 bg-gray-600 rounded-full flex items-center justify-center text-white text-3xl cursor-pointer hover:bg-gray-500 transition-colors"
+                    className="w-20 h-20 md:w-24 md:h-24 bg-gray-600 rounded-full flex items-center justify-center text-white text-2xl md:text-3xl cursor-pointer hover:bg-gray-500 transition-colors"
                     onClick={handleProfilePictureClick}
                   >
                     {currentProfile.displayName[0].toUpperCase()}
@@ -248,27 +277,35 @@ export default function Profile() {
               </div>
               <div>
                 {isEditing ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={currentProfile.displayName}
-                      onChange={(e) => handleInputChange('displayName', e.target.value)}
-                      className="bg-gray-700 text-white px-3 py-2 rounded-md mb-2 w-full"
-                    />
-                    <input
-                      type="text"
-                      value={currentProfile.username}
-                      onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/\s+/g, ''))}
-                      className={`bg-gray-700 text-white px-3 py-2 rounded-md w-full ${usernameError ? 'border-2 border-red-500' : ''}`}
-                      placeholder="Choose your username"
-                    />
-                    {usernameError && (
-                      <p className="text-red-500 text-sm mt-1">This username is already taken</p>
-                    )}
+                  <div className="space-y-2 w-full">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={currentProfile.displayName}
+                        onChange={(e) => handleInputChange('displayName', e.target.value)}
+                        className="bg-gray-700 text-white px-3 py-2 rounded-md w-full pt-6 peer"
+                        placeholder=" "
+                      />
+                      <label className="absolute text-sm text-gray-400 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-3 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
+                        Display Name
+                      </label>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={currentProfile.username}
+                        onChange={(e) => handleInputChange('username', e.target.value.toLowerCase().replace(/\s+/g, ''))}
+                        className={`bg-gray-700 text-white px-3 py-2 rounded-md w-full pt-6 peer focus:outline-none ${usernameError ? 'border-2 border-red-500' : editedProfile.username && editedProfile.username !== profile.username ? 'border-2 border-green-500' : 'border-2 border-gray-600'}`}
+                        placeholder=" "
+                      />
+                      <label className="absolute text-sm text-gray-400 duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-3 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
+                        Username
+                      </label>
+                    </div>
                   </div>
                 ) : (
-                  <div>
-                    <h1 className="text-2xl font-bold text-white">{currentProfile.displayName}</h1>
+                  <div className="text-center md:text-left">
+                    <h1 className="text-xl md:text-2xl font-bold text-white">{currentProfile.displayName}</h1>
                     <p 
                       className="text-gray-400 cursor-pointer hover:text-blue-400 transition-colors"
                       onClick={() => handleUsernameClick(currentProfile.username)}
@@ -279,17 +316,27 @@ export default function Profile() {
                 )}
               </div>
             </div>
-            <button
-              onClick={isEditing ? handleSave : handleEditToggle}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              {isEditing ? 'Save Changes' : 'Edit Profile'}
-            </button>
+            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+              <button
+                onClick={isEditing ? handleSave : handleEditToggle}
+                className="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                {isEditing ? 'Save Changes' : 'Edit Profile'}
+              </button>
+              <button
+                onClick={() => {
+                  signOut(auth).then(() => navigate('/'))
+                }}
+                className="w-full md:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold text-white mb-2">Bio</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white mb-2">Bio</h2>
               {isEditing ? (
                 <textarea
                   value={currentProfile.bio}
@@ -303,7 +350,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white mb-2">Contact & Social Links</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white mb-2">Contact & Social Links</h2>
               {isEditing ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input
@@ -362,7 +409,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white mb-2">Work & Skills</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white mb-2">Work & Skills</h2>
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
@@ -408,7 +455,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white mb-2">Projects</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white mb-2">Projects</h2>
               {currentProfile.projects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {currentProfile.projects.map((project, index) => (
@@ -424,7 +471,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white mb-2">Account Details</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-white mb-2">Account Details</h2>
               <p className="text-gray-400">Joined: {new Date(currentProfile.joinedAt).toLocaleDateString()}</p>
             </div>
           </div>

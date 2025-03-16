@@ -80,7 +80,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-20' : 'pl-80'} flex items-center justify-center transition-all duration-300`}>
+      <div className={`min-h-screen bg-[#0f0f0f] pt-16 ${isCollapsed ? 'pl-16' : 'pl-64'} flex items-center justify-center transition-all duration-300`}>
         <l-jelly-triangle
           size="40"
           speed="1.75"
@@ -91,7 +91,7 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-80'} transition-all duration-300`}>
+    <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-16' : 'md:pl-64'} transition-all duration-300`}>
       <div className="max-w-7xl mx-auto p-8">
         <h1 className="text-2xl font-bold text-white mb-8">Discover Projects</h1>
         

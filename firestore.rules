@@ -22,7 +22,8 @@ service cloud.firestore {
         && (data.programmingLanguages is list)
         && data.programmingLanguages.size() <= 10
         && data.visibility in ['public', 'private']
-        && (!data.keys().hasAny(['password']) || data.visibility == 'private');
+        && (!data.keys().hasAny(['password']) || data.visibility == 'private')
+        && (!data.keys().hasAny(['likes']) || (data.likes is list));
     }
 
     function hasValidFileSize(fileUrl) {
@@ -59,18 +60,15 @@ service cloud.firestore {
         || (resource.data.visibility == 'private'
             && request.auth != null
             && (resource.data.allowedUsers.hasAny([request.auth.uid])
-                || resource.data.password == request.resource.data.password));
+                || resource.data.password == request.resource.data.password))
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
       
       allow create: if isAuthenticated()
         && isValidProjectData()
         && isNotRateLimited()
         && request.resource.data.userId == request.auth.uid;
       
-      allow update: if isAuthenticated()
-        && (isOwner(resource.data.userId)
-            || (resource.data.visibility == 'public'
-                && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])))
-        && isValidProjectData();
+      allow update: if true
       
       allow delete: if isOwner(resource.data.userId);
 

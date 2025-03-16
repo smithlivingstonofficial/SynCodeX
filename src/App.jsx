@@ -14,6 +14,7 @@ import Projects from './components/Projects'
 import Upload from './components/Upload'
 import ProjectView from './components/ProjectView'
 import CodeEditor from './components/CodeEditor'
+// import Editor from './components/Editor'
 
 jellyTriangle.register()
 
@@ -50,14 +51,13 @@ function App() {
           </>
         )}
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/channel/:username" element={<Channel />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/project/:projectId" element={<ProjectView />} />
-          <Route path="/editor/:projectId" element={<CodeEditor />} />
+          <Route path="/" element={!user ? <Login /> : <Home />} />
+          <Route path="/profile" element={user ? <Profile /> : <Login />} />
+          <Route path="/channel/:username" element={user ? <Channel /> : <Login />} />
+          <Route path="/projects" element={user ? <Projects /> : <Login />} />
+          <Route path="/upload" element={user ? <Upload /> : <Login />} />
+          <Route path="/project/:projectId" element={user ? <ProjectView /> : <Login />} />
+          <Route path="/editor/:projectId" element={user ? <CodeEditor /> : <Login />} />
         </Routes>
       </SidebarProvider>
     </Router>

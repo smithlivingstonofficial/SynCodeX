@@ -8,7 +8,7 @@ const firebaseConfig = {
     authDomain: "syncodex.firebaseapp.com",
     databaseURL: "https://syncodex-default-rtdb.firebaseio.com",
     projectId: "syncodex",
-    storageBucket: "syncodex.firebasestorage.app",
+    storageBucket: "syncodex.appspot.com",
     messagingSenderId: "1054429357028",
     appId: "1:1054429357028:web:4233ddef8c4f3c9771ddf1"
   };
