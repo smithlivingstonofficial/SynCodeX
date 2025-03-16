@@ -14,6 +14,7 @@ export default function Channel() {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   const { isCollapsed } = useSidebar();
   const navigate = useNavigate();
   const db = getFirestore();
@@ -71,7 +72,7 @@ export default function Channel() {
     }
   }, [username, db, user?.uid]);
 
-  const handleFollow = async () => {
+  const handleFollowAction = async () => {
     if (!user) {
       navigate('/');
       return;
@@ -107,6 +108,7 @@ export default function Channel() {
           });
         }
       });
+      setShowUnfollowModal(false);
     } catch (error) {
       console.error('Error updating follow status:', error);
       // Revert optimistic UI updates
@@ -114,6 +116,19 @@ export default function Channel() {
       setFollowerCount(prevCount => isFollowing ? prevCount + 1 : prevCount - 1);
       // Show error message to user
       alert('Failed to update follow status. Please try again.');
+    }
+  };
+
+  const handleFollow = () => {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    if (isFollowing) {
+      setShowUnfollowModal(true);
+    } else {
+      handleFollowAction();
     }
   };
 
@@ -143,6 +158,29 @@ export default function Channel() {
 
   return (
     <div className={`min-h-screen bg-[#0f0f0f] pt-16 pb-16 md:pb-0 ${isCollapsed ? 'md:pl-20' : 'md:pl-80'} transition-all duration-300`}>
+      {/* Unfollow Confirmation Modal */}
+      {showUnfollowModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-xl font-semibold text-white mb-4">Unfollow Confirmation</h3>
+            <p className="text-gray-300 mb-6">Are you sure you want to unfollow {profile.displayName}?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowUnfollowModal(false)}
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleFollowAction}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              >
+                Unfollow
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-[1920px] mx-auto">
         {/* Channel Banner */}
         <div className="h-48 md:h-64 bg-gray-800 w-full relative overflow-hidden">
