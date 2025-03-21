@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function validateChannelData() {
+      let data = request.resource.data;
+      return 
+        data.name.size() >= 1 && 
+        data.name.size() <= 50 &&
+        data.handle.matches('^[a-zA-Z0-9_]{3,30}$') &&
+        (!('description' in data) || data.description.size() <= 500) &&
+        (!('logoUrl' in data) || data.logoUrl.matches('^https://.*'));
+    }
+
+    // Channel document rules
+    match /channels/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && validateChannelData();
+      allow delete: if isOwner(userId);
+      
+      // Rate limiting: max 10 writes per minute
+      allow write: if request.time > resource.data.lastWrite + duration.value(60, 's') ||
+                    resource.data.writeCount < 10;
+    }
+  }
+}
