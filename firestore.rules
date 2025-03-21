@@ -20,6 +20,19 @@ service cloud.firestore {
         (!('logoUrl' in data) || data.logoUrl.matches('^https://.*'));
     }
 
+    function validateProjectData() {
+      let data = request.resource.data;
+      return 
+        data.title.size() >= 1 &&
+        data.title.size() <= 100 &&
+        data.description.size() <= 2000 &&
+        data.language.size() >= 1 &&
+        (!('tags' in data) || data.tags is list) &&
+        data.visibility in ['public', 'private'] &&
+        (!('thumbnailUrl' in data) || data.thumbnailUrl.matches('^https://.*')) &&
+        (!('fileUrl' in data) || data.fileUrl.matches('^https://.*'));
+    }
+
     // Channel document rules
     match /channels/{userId} {
       allow read: if isAuthenticated();
@@ -29,6 +42,18 @@ service cloud.firestore {
       // Rate limiting: max 10 writes per minute
       allow write: if request.time > resource.data.lastWrite + duration.value(60, 's') ||
                     resource.data.writeCount < 10;
+    }
+
+    // Project document rules
+    match /projects/{projectId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.visibility == 'public' ||
+        (resource.data.visibility == 'private' && isOwner(resource.data.userId)));
+      
+      allow create: if isAuthenticated() && validateProjectData() &&
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update, delete: if isOwner(resource.data.userId);
     }
   }
 }

@@ -15,10 +15,28 @@ service firebase.storage {
              request.resource.size <= 5 * 1024 * 1024; // 5MB max
     }
 
-    // Channel logo rules
-    match /channel-logos/{userId} {
+    function isValidProjectFile() {
+      return request.resource.contentType == 'application/zip' &&
+             request.resource.size <= 50 * 1024 * 1024; // 50MB max
+    }
+
+    // Profile pictures and thumbnails
+    match /profile-pictures/{userId}/{fileName} {
       allow read: if isAuthenticated();
       allow create, update: if isOwner(userId) && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    match /thumbnails/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && isValidImage();
+      allow delete: if isOwner(userId);
+    }
+
+    // Project files
+    match /projects/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && isValidProjectFile();
       allow delete: if isOwner(userId);
     }
   }

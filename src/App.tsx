@@ -5,6 +5,7 @@ import { auth } from './firebase';
 import Home from './components/pages/Home';
 import Login from './components/pages/Login';
 import Profile from './components/pages/Profile';
+import Upload from './components/pages/Upload';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,6 +42,7 @@ function App() {
       <Routes>
         <Route path="/home" element={user ? <Home /> : <Login />} />
         <Route path="/profile" element={user ? <Profile /> : <Login />} />
+        <Route path="/upload" element={user ? <Upload /> : <Login />} />
         <Route path="/" element={<Login />} />
       </Routes>
     </Router>
