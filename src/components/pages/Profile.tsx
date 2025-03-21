@@ -1,25 +1,93 @@
 import { useState, useEffect } from 'react';
-import { auth } from '../../firebase';
+import { auth, db, storage } from '../../firebase';
+import { signOut } from 'firebase/auth';
+import { useNavigate } from 'react-router-dom';
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [channelData, setChannelData] = useState({
     name: '',
     handle: '',
     description: '',
     logoUrl: ''
   });
+  const [originalData, setOriginalData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [handleStatus, setHandleStatus] = useState({
+    isValid: true,
+    message: '',
+    originalHandle: ''
+  });
 
   useEffect(() => {
-    // Initialize with user's email as default channel name
-    if (auth.currentUser) {
-      setChannelData(prev => ({
-        ...prev,
-        name: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || ''
-      }));
-    }
+    const fetchChannelData = async () => {
+      if (!auth.currentUser) return;
+
+      try {
+        const docRef = doc(db, 'channels', auth.currentUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setChannelData(data);
+          setOriginalData(data);
+          setHandleStatus(prev => ({ ...prev, originalHandle: data.handle }));
+        } else {
+          const initialData = {
+            name: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || '',
+            handle: '',
+            description: '',
+            logoUrl: ''
+          };
+          setChannelData(initialData);
+          setOriginalData(initialData);
+        }
+      } catch (err) {
+        console.error('Error fetching channel data:', err);
+        setError('Failed to load channel data');
+      }
+    };
+
+    fetchChannelData();
   }, []);
+
+  const hasChanges = () => {
+    if (!originalData) return false;
+    return (
+      channelData.name !== originalData.name ||
+      channelData.handle !== originalData.handle ||
+      channelData.description !== originalData.description ||
+      channelData.logoUrl !== originalData.logoUrl
+    );
+  };
+
+  const checkHandleAvailability = async (handle: string) => {
+    if (!handle) return;
+    if (handle === handleStatus.originalHandle) {
+      setHandleStatus(prev => ({ ...prev, isValid: true, message: '' }));
+      return;
+    }
+
+    try {
+      const channelsRef = collection(db, 'channels');
+      const q = query(channelsRef, where('handle', '==', handle));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        setHandleStatus(prev => ({ ...prev, isValid: true, message: 'Username is available' }));
+      } else {
+        setHandleStatus(prev => ({ ...prev, isValid: false, message: 'Username is already taken' }));
+      }
+    } catch (err) {
+      console.error('Error checking handle availability:', err);
+      setHandleStatus(prev => ({ ...prev, isValid: false, message: 'Error checking username availability' }));
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -27,25 +95,67 @@ const Profile = () => {
       ...prev,
       [name]: value
     }));
+
+    if (name === 'handle') {
+      const timeoutId = setTimeout(() => checkHandleAvailability(value), 500);
+      return () => clearTimeout(timeoutId);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement save functionality
-    console.log('Channel data:', channelData);
+    if (!auth.currentUser || !handleStatus.isValid) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const docRef = doc(db, 'channels', auth.currentUser.uid);
+      await setDoc(docRef, channelData);
+      setHandleStatus(prev => ({ ...prev, originalHandle: channelData.handle }));
+    } catch (err) {
+      console.error('Error saving channel data:', err);
+      setError('Failed to save changes');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setChannelData(prev => ({
-          ...prev,
-          logoUrl: reader.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file || !auth.currentUser) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const storageRef = ref(storage, `channel-logos/${auth.currentUser.uid}`);
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      setChannelData(prev => ({
+        ...prev,
+        logoUrl: downloadURL
+      }));
+
+      const docRef = doc(db, 'channels', auth.currentUser.uid);
+      await setDoc(docRef, { ...channelData, logoUrl: downloadURL });
+      setOriginalData(prev => ({ ...prev, logoUrl: downloadURL }));
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      setError('Failed to upload image');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      navigate('/');
+    } catch (err) {
+      console.error('Error signing out:', err);
+      setError('Failed to sign out');
     }
   };
 
@@ -55,8 +165,22 @@ const Profile = () => {
       <Sidebar />
       <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
         <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-2xl font-bold text-white mb-8">Channel Customization</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-2xl font-bold text-white">Channel Customization</h1>
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
           
+          {error && (
+            <div className="mb-4 p-4 bg-red-500 bg-opacity-10 border border-red-500 rounded-lg text-red-500">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="bg-gray-900 rounded-xl p-6 space-y-6">
               <div className="flex items-start gap-6">
@@ -72,12 +196,13 @@ const Profile = () => {
                       )}
                     </div>
                     <label className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-full">
-                      <span className="text-white text-sm">Change</span>
+                      <span className="text-white text-sm">{isLoading ? 'Uploading...' : 'Change'}</span>
                       <input
                         type="file"
                         accept="image/*"
                         onChange={handleImageUpload}
                         className="hidden"
+                        disabled={isLoading}
                       />
                     </label>
                   </div>
@@ -96,6 +221,7 @@ const Profile = () => {
                       onChange={handleChange}
                       className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter channel name"
+                      disabled={isLoading}
                     />
                   </div>
                   
@@ -111,9 +237,15 @@ const Profile = () => {
                         name="handle"
                         value={channelData.handle}
                         onChange={handleChange}
-                        className="w-full pl-8 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className={`w-full pl-8 pr-4 py-2 bg-gray-800 border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${handleStatus.message ? (handleStatus.isValid ? 'border-green-500' : 'border-red-500') : 'border-gray-700'}`}
                         placeholder="handle"
+                        disabled={isLoading}
                       />
+                      {handleStatus.message && (
+                        <span className={`text-sm ${handleStatus.isValid ? 'text-green-500' : 'text-red-500'} mt-1 block`}>
+                          {handleStatus.message}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -131,15 +263,17 @@ const Profile = () => {
                   rows={4}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   placeholder="Tell viewers about your channel"
+                  disabled={isLoading}
                 />
               </div>
 
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading || !handleStatus.isValid || !hasChanges()}
                 >
-                  Save
+                  {isLoading ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>
