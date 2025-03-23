@@ -186,7 +186,7 @@ const ProjectView = () => {
             {/* Channel Profile */}
             {channel && (
               <div className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl mb-6 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer">
-                <Link to={`/channel/${project.userId}`} className="flex items-center space-x-4 flex-1">
+                <Link to={`/channel/${channel.handle}`} className="flex items-center space-x-4 flex-1">
                   <div className="w-16 h-16 rounded-full overflow-hidden">
                     <img
                       src={channel.logoUrl || '/default-avatar.png'}

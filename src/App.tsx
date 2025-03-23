@@ -47,7 +47,7 @@ function App() {
         <Route path="/profile" element={user ? <Profile /> : <Login />} />
         <Route path="/upload" element={user ? <Upload /> : <Login />} />
         <Route path="/:projectId" element={<ProjectView />} />
-        <Route path="/channel/:userId" element={<Channel />} />
+        <Route path="/channel/:handle" element={<Channel />} />
       </Routes>
     </Router>
   );

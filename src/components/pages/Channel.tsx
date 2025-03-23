@@ -24,7 +24,7 @@ interface Project {
 }
 
 const Channel = () => {
-  const { userId } = useParams();
+  const { handle } = useParams();
   const [channel, setChannel] = useState<ChannelData | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,23 +32,28 @@ const Channel = () => {
 
   useEffect(() => {
     const fetchChannelAndProjects = async () => {
-      if (!userId) return;
+      if (!handle) return;
 
       try {
-        // Fetch channel data
-        const channelDoc = await getDoc(doc(db, 'channels', userId));
-        if (!channelDoc.exists()) {
+        // Fetch channel data by handle
+        const channelsRef = collection(db, 'channels');
+        const q = query(channelsRef, where('handle', '==', handle.replace('@', '')));
+        const channelSnapshot = await getDocs(q);
+
+        if (channelSnapshot.empty) {
           setError('Channel not found');
           setLoading(false);
           return;
         }
 
-        setChannel(channelDoc.data() as ChannelData);
+        const channelDoc = channelSnapshot.docs[0];
+        const channelData = channelDoc.data() as ChannelData;
+        setChannel(channelData);
 
         // Fetch channel's public projects
         const projectsQuery = query(
           collection(db, 'projects'),
-          where('userId', '==', userId),
+          where('userId', '==', channelDoc.id),
           where('visibility', '==', 'public')
         );
 
@@ -68,7 +73,7 @@ const Channel = () => {
     };
 
     fetchChannelAndProjects();
-  }, [userId]);
+  }, [handle]);
 
   if (loading) {
     return (
