@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { Link } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 
@@ -98,7 +99,11 @@ const Home = () => {
       <main className={`pt-14 transition-all duration-200 bg-white dark:bg-gray-950 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
           {projects.map((project) => (
-            <div key={project.id} className="bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-200 shadow-lg">
+            <Link
+              key={project.id}
+              to={`/${project.id}`}
+              className="block bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
               <div className="aspect-video bg-gray-200 dark:bg-gray-800 relative">
                 {project.thumbnail ? (
                   <img 
@@ -149,7 +154,7 @@ const Home = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </main>

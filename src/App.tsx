@@ -6,6 +6,8 @@ import Home from './components/pages/Home';
 import Login from './components/pages/Login';
 import Profile from './components/pages/Profile';
 import Upload from './components/pages/Upload';
+import ProjectView from './components/pages/ProjectView';
+import Channel from './components/pages/Channel';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -40,10 +42,12 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={user ? <Home /> : <Login />} />
         <Route path="/home" element={user ? <Home /> : <Login />} />
         <Route path="/profile" element={user ? <Profile /> : <Login />} />
         <Route path="/upload" element={user ? <Upload /> : <Login />} />
-        <Route path="/" element={<Login />} />
+        <Route path="/:projectId" element={<ProjectView />} />
+        <Route path="/channel/:userId" element={<Channel />} />
       </Routes>
     </Router>
   );
