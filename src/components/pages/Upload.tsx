@@ -1,22 +1,17 @@
-import { useState, useRef, DragEvent } from 'react';
+import { useState } from 'react';
 import { auth, db, storage } from '../../firebase';
+import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 
 const Upload = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isDraggingThumbnail, setIsDraggingThumbnail] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   const [projectData, setProjectData] = useState({
     title: '',
     description: '',
@@ -31,59 +26,28 @@ const Upload = () => {
     'Ruby', 'PHP', 'Swift', 'Kotlin', 'Go', 'Rust', 'Other'
   ];
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProjectData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleThumbnailDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDraggingThumbnail(true);
-  };
-
-  const handleThumbnailDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDraggingThumbnail(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === 'application/zip') {
-      setFile(droppedFile);
-      setError('');
-    } else {
-      setError('Please upload a ZIP file');
-    }
-  };
-
-  const handleThumbnailDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDraggingThumbnail(false);
-    
-    const droppedFile = e.dataTransfer.files[0];
-    handleThumbnailFile(droppedFile);
-  };
-
-  const handleThumbnailFile = (file: File | null) => {
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    // Validate file type and size
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      setError('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      setError('Please upload a valid image file (JPEG, PNG, or GIF)');
       return;
     }
 
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      setError('Thumbnail size should be less than 2MB');
+      setError('Image size should be less than 5MB');
       return;
     }
 
@@ -98,68 +62,89 @@ const Upload = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile && selectedFile.type === 'application/zip') {
-      setFile(selectedFile);
-      setError('');
-    } else {
-      setError('Please upload a ZIP file');
-    }
-  };
-
-  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    handleThumbnailFile(selectedFile);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setProjectData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !auth.currentUser) return;
+    if (!auth.currentUser) {
+      setError('Please ensure you are logged in');
+      return;
+    }
+
+    if (!projectData.title.trim()) {
+      setError('Please enter a project title');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
 
     try {
-      // Upload thumbnail if exists
       let thumbnailUrl = '';
+      let projectId = '';
       if (thumbnail) {
-        const timestamp = Date.now();
-        const thumbnailRef = ref(storage, `thumbnails/${auth.currentUser.uid}/${timestamp}_${thumbnail.name}`);
-        await uploadBytes(thumbnailRef, thumbnail);
-        thumbnailUrl = await getDownloadURL(thumbnailRef);
+        // Create a new document reference with auto-generated ID
+        const projectRef = doc(collection(db, 'projects'));
+        projectId = projectRef.id;
+        
+        const fileName = `thumbnail_${thumbnail.name}`;
+        const storageRef = ref(storage, `projects/${projectId}/thumbnail/${fileName}`);
+        
+        // Add metadata
+        const metadata = {
+          contentType: thumbnail.type,
+          customMetadata: {
+            projectId: projectId,
+            userId: auth.currentUser.uid,
+            uploadedAt: new Date().toISOString(),
+            originalName: thumbnail.name
+          }
+        };
+
+        // Upload with metadata and handle potential errors
+        try {
+          const uploadResult = await uploadBytes(storageRef, thumbnail, metadata);
+          thumbnailUrl = await getDownloadURL(uploadResult.ref);
+        } catch (uploadError: any) {
+          console.error('Error uploading thumbnail:', uploadError);
+          if (uploadError.code === 'storage/unauthorized') {
+            throw new Error('You do not have permission to upload files');
+          } else if (uploadError.code === 'storage/canceled') {
+            throw new Error('Upload was canceled');
+          } else if (uploadError.code === 'storage/unknown') {
+            throw new Error('An unknown error occurred during upload');
+          } else {
+            throw new Error('Failed to upload thumbnail: ' + (uploadError.message || 'Unknown error'));
+          }
+        }
       }
 
-      // Upload project file
-      const storageRef = ref(storage, `projects/${auth.currentUser.uid}/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+      const tags = projectData.tags
+        ? projectData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        : [];
 
-      // Save project data to Firestore
-      const projectId = `${auth.currentUser.uid}_${Date.now()}`;
-      const projectRef = doc(db, 'projects', projectId);
-      await setDoc(projectRef, {
-        ...projectData,
-        thumbnailUrl,
-        fileUrl: downloadURL,
-        fileName: file.name,
-        uploadedAt: Date.now(),
+      // If no thumbnail was uploaded, create a new document reference
+      if (!projectId) {
+        const projectRef = doc(collection(db, 'projects'));
+        projectId = projectRef.id;
+      }
+
+      await setDoc(doc(db, 'projects', projectId), {
+        projectId,
+        title: projectData.title.trim(),
+        description: projectData.description.trim(),
+        programmingLanguages: [projectData.language],
+        visibility: projectData.visibility,
+        uploadedAt: serverTimestamp(),
         userId: auth.currentUser.uid,
-        tags: projectData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        tags,
+        likes: [],
+        thumbnailUrl
       });
 
+      // Navigate to home after successful upload
       navigate('/home');
     } catch (err: any) {
       console.error('Error uploading project:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to upload project');
     } finally {
       setIsLoading(false);
     }
@@ -175,70 +160,6 @@ const Upload = () => {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Upload Project</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${isDragging ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700/50 hover:border-gray-600'}`}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".zip"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <div className="text-gray-500">
-                      {file ? (
-                        <span className="text-blue-500">{file.name}</span>
-                      ) : (
-                        <span>Drag and drop your project ZIP file here, or click to select</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  onDragOver={handleThumbnailDragOver}
-                  onDragLeave={handleThumbnailDragLeave}
-                  onDrop={handleThumbnailDrop}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 relative ${isDraggingThumbnail ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700/50 hover:border-gray-600'}`}
-                  onClick={() => thumbnailInputRef.current?.click()}
-                >
-                  <input
-                    ref={thumbnailInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailSelect}
-                    className="hidden"
-                  />
-                  {thumbnailPreview ? (
-                    <div className="relative w-full aspect-video rounded-lg overflow-hidden group">
-                      <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                        <span className="text-white text-sm">Click to change thumbnail</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center space-y-4 h-full">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <div className="text-gray-500">
-                        <span>Add a thumbnail image (optional)</span>
-                        <p className="text-xs mt-1">Recommended: 16:9 ratio, max 2MB</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               <div className="space-y-4">
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Title</label>
@@ -283,6 +204,52 @@ const Upload = () => {
                       <option key={lang} value={lang}>{lang}</option>
                     ))}
                   </select>
+                </div>
+
+                <div>
+                  <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Thumbnail</label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 dark:border-gray-700/50 border-dashed rounded-xl">
+                    <div className="space-y-1 text-center">
+                      {thumbnailPreview ? (
+                        <div className="relative w-full max-w-[300px] mx-auto">
+                          <img src={thumbnailPreview} alt="Thumbnail preview" className="rounded-lg shadow-lg" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setThumbnail(null);
+                              setThumbnailPreview('');
+                            }}
+                            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                            <label htmlFor="thumbnail" className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                              <span>Upload a file</span>
+                              <input
+                                id="thumbnail"
+                                name="thumbnail"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleThumbnailChange}
+                                className="sr-only"
+                              />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF up to 5MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div>

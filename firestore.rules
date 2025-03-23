@@ -1,59 +1,169 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    // Helper functions for validation and rate limiting
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    function validateChannelData() {
-      let data = request.resource.data;
-      return 
-        data.name.size() >= 1 && 
-        data.name.size() <= 50 &&
-        data.handle.matches('^[a-zA-Z0-9_]{3,30}$') &&
-        (!('description' in data) || data.description.size() <= 500) &&
-        (!('logoUrl' in data) || data.logoUrl.matches('^https://.*'));
+
+    function isValidUsername(username) {
+      return username.matches('^[a-zA-Z0-9_]{3,30}$');
     }
 
-    function validateProjectData() {
+    function isValidProjectData() {
       let data = request.resource.data;
-      return 
-        data.title.size() >= 1 &&
-        data.title.size() <= 100 &&
-        data.description.size() <= 2000 &&
-        data.language.size() >= 1 &&
-        (!('tags' in data) || data.tags is list) &&
-        data.visibility in ['public', 'private'] &&
-        (!('thumbnailUrl' in data) || data.thumbnailUrl.matches('^https://.*')) &&
-        (!('fileUrl' in data) || data.fileUrl.matches('^https://.*'));
+      return data.title.size() >= 3
+        && data.title.size() <= 100
+        && (data.description == null || data.description.size() <= 5000)
+        && (data.programmingLanguages is list)
+        && data.programmingLanguages.size() <= 10
+        && data.visibility in ['public', 'private']
+        && (!data.keys().hasAny(['password']) || data.visibility == 'private')
+        && (!data.keys().hasAny(['likes']) || (data.likes is list));
     }
 
-    // Channel document rules
-    match /channels/{userId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isOwner(userId) && validateChannelData();
-      allow delete: if isOwner(userId);
+    function hasValidFileSize(fileUrl) {
+      return fileUrl == null || fileUrl.size() <= 500;
+    }
+
+    function isValidFollowerUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      let followersChange = diff.affectedKeys().hasOnly(['followers']);
+      let followersArray = request.resource.data.followers;
       
-      // Rate limiting: max 10 writes per minute
-      allow write: if request.time > resource.data.lastWrite + duration.value(60, 's') ||
-                    resource.data.writeCount < 10;
+      return followersChange && 
+             followersArray is list && 
+             followersArray.size() <= 1000 &&
+             isAuthenticated();  // Only require authentication for follower updates
     }
 
-    // Project document rules
+    function isValidFollowingUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      let followingChange = diff.affectedKeys().hasOnly(['following']);
+      let followingArray = request.resource.data.following;
+      let oldFollowingArray = resource.data.following;
+      
+      return followingChange && 
+             followingArray is list && 
+             followingArray.size() <= 1000 &&
+             (followingArray.size() == oldFollowingArray.size() + 1 || 
+              followingArray.size() == oldFollowingArray.size() - 1) && 
+             followingArray.removeAll(oldFollowingArray).size() <= 1;
+    }
+
+    // Rate limiting function - 100 writes per hour per user
+    function isNotRateLimited() {
+      let hourAgo = request.time.toMillis() - duration.value(1, 'h');
+      let recentWrites = getCountFromPath(
+        /databases/$(database)/documents/users/$(request.auth.uid)/writes
+      )
+      .where('timestamp', '>', hourAgo)
+      .count();
+      return recentWrites < 100;
+    }
+
+    // Profiles collection rules
+    match /profiles/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isOwner(userId) &&
+        request.resource.data.followers is list &&
+        request.resource.data.following is list &&
+        request.resource.data.followers.size() == 0 &&
+        request.resource.data.following.size() == 0;
+      allow update: if isAuthenticated() && 
+        (isOwner(userId) || isValidFollowerUpdate() || isValidFollowingUpdate());
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Projects collection rules with enhanced security
     match /projects/{projectId} {
-      allow read: if isAuthenticated() &&
-        (resource.data.visibility == 'public' ||
-        (resource.data.visibility == 'private' && isOwner(resource.data.userId)));
+      allow read: if true;
       
-      allow create: if isAuthenticated() && validateProjectData() &&
-        request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && isValidProjectData()
+        && request.resource.data.userId == request.auth.uid;
       
-      allow update, delete: if isOwner(resource.data.userId);
+      allow update: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid
+            || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
+      
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.text.size() <= 1000;
+        allow update, delete: if isOwner(resource.data.userId);
+      }
+    }
+
+    // Channel-specific rules
+    match /channels/{channelId} {
+      allow read: if true;
+      allow write: if isOwner(channelId);
+
+      match /followers/{followerId} {
+        allow read: if true;
+        allow write: if isAuthenticated() && 
+          (followerId == request.auth.uid) &&
+          (request.method == 'create' || request.method == 'delete');
+      }
+
+      match /following/{followingId} {
+        allow read: if true;
+        allow write: if isAuthenticated() && 
+          (followingId == request.auth.uid) &&
+          (request.method == 'create' || request.method == 'delete');
+      }
+    }
+
+    // Notifications with rate limiting
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && isNotRateLimited();
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    // Messages collection rules
+    match /messages/{messageId} {
+      function isParticipant() {
+        return isAuthenticated() && request.resource.data.participants.hasAny([request.auth.uid]);
+      }
+
+      function isValidMessageData() {
+        let data = request.resource.data;
+        return data.content.size() > 0
+          && data.content.size() <= 5000
+          && data.participants.size() == 2
+          && data.timestamp is string
+          && data.channelId is string;
+      }
+
+      function areParticipantsFollowingEachOther() {
+        let participants = request.resource.data.participants;
+        let profileRef1 = get(/databases/$(database)/documents/profiles/$(participants[0]));
+        let profileRef2 = get(/databases/$(database)/documents/profiles/$(participants[1]));
+        
+        return profileRef1.data.followers.hasAny([participants[1]])
+          && profileRef2.data.followers.hasAny([participants[0]]);
+      }
+
+      allow read: if isAuthenticated() && resource.data.participants.hasAny([request.auth.uid]);
+      allow create: if isParticipant() && isValidMessageData() && areParticipantsFollowingEachOther();
+      allow update, delete: if false; // Messages cannot be edited or deleted
     }
   }
 }
