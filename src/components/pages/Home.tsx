@@ -15,7 +15,7 @@ interface Project {
   id: string;
   title: string;
   description: string;
-  thumbnail: string;
+  thumbnailUrl: string;
   createdAt: Date;
   visibility: string;
   userId: string;
@@ -105,9 +105,9 @@ const Home = () => {
               className="block bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-200 shadow-lg"
             >
               <div className="aspect-video bg-gray-200 dark:bg-gray-800 relative">
-                {project.thumbnail ? (
+                {project.thumbnailUrl ? (
                   <img 
-                    src={project.thumbnail} 
+                    src={project.thumbnailUrl} 
                     alt={project.title} 
                     className="w-full h-full object-cover"
                   />
