@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Link } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
+import ProjectDropdown from '../shared/ProjectDropdown';
 
 interface Channel {
   name: string;
@@ -23,6 +24,12 @@ interface Project {
   channel?: Channel;
 }
 
+interface DropdownState {
+  isOpen: boolean;
+  projectId: string;
+  position: { top: number; left: number };
+}
+
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     const savedState = localStorage.getItem('sidebarState');
@@ -32,6 +39,30 @@ const Home = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dropdownState, setDropdownState] = useState<DropdownState>({
+    isOpen: false,
+    projectId: '',
+    position: { top: 0, left: 0 }
+  });
+
+  const handleMenuClick = useCallback((e: React.MouseEvent, projectId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const button = e.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    setDropdownState({
+      isOpen: true,
+      projectId,
+      position: {
+        top: rect.bottom + window.scrollY,
+        left: rect.left - 180 + rect.width
+      }
+    });
+  }, []);
+
+  const handleCloseDropdown = useCallback(() => {
+    setDropdownState(prev => ({ ...prev, isOpen: false }));
+  }, []);
 
   useEffect(() => {
     const handleToggle = () => {
@@ -140,7 +171,10 @@ const Home = () => {
                       <p className="text-sm text-gray-600 dark:text-gray-400 truncate">@{project.channel?.handle || 'anonymous'}</p>
                     </div>
                   </div>
-                  <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full">
+                  <button 
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
+                    onClick={(e) => handleMenuClick(e, project.id)}
+                  >
                     <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                     </svg>
@@ -157,6 +191,12 @@ const Home = () => {
             </Link>
           ))}
         </div>
+        <ProjectDropdown
+          projectId={dropdownState.projectId}
+          isOpen={dropdownState.isOpen}
+          onClose={handleCloseDropdown}
+          position={dropdownState.position}
+        />
       </main>
     </div>
   );
