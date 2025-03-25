@@ -66,7 +66,7 @@ const Home = () => {
 
   useEffect(() => {
     const handleToggle = () => {
-      setIsSidebarOpen(prev => !prev);
+      setIsSidebarOpen((prev: boolean) => !prev);
     };
     window.addEventListener('toggle-sidebar', handleToggle);
     return () => window.removeEventListener('toggle-sidebar', handleToggle);

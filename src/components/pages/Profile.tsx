@@ -7,15 +7,22 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 
+interface ChannelData {
+  name: string;
+  handle: string;
+  description: string;
+  logoUrl: string;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
-  const [channelData, setChannelData] = useState({
+  const [channelData, setChannelData] = useState<ChannelData>({
     name: '',
     handle: '',
     description: '',
     logoUrl: ''
   });
-  const [originalData, setOriginalData] = useState(null);
+  const [originalData, setOriginalData] = useState<ChannelData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [handleStatus, setHandleStatus] = useState({
@@ -33,12 +40,12 @@ const Profile = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const data = docSnap.data();
+          const data = docSnap.data() as ChannelData;
           setChannelData(data);
           setOriginalData(data);
           setHandleStatus(prev => ({ ...prev, originalHandle: data.handle }));
         } else {
-          const initialData = {
+          const initialData: ChannelData = {
             name: auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || '',
             handle: '',
             description: '',
@@ -56,7 +63,7 @@ const Profile = () => {
     fetchChannelData();
   }, []);
 
-  const hasChanges = () => {
+  const hasChanges = (): boolean => {
     if (!originalData) return false;
     return (
       channelData.name !== originalData.name ||
