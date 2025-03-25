@@ -14,9 +14,10 @@ interface Comment {
 
 interface CommentSectionProps {
   projectId: string;
+  isModal?: boolean;
 }
 
-const CommentSection = ({ projectId }: CommentSectionProps) => {
+const CommentSection = ({ projectId, isModal = false }: CommentSectionProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -149,74 +150,41 @@ const CommentSection = ({ projectId }: CommentSectionProps) => {
   }
 
   return (
-    <div className="mt-8 space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Comments</h2>
+    <div className={`${isModal ? 'h-full flex flex-col' : 'mt-8'} space-y-6`}>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white sticky top-0 bg-white dark:bg-gray-950 py-4 z-10 border-b border-gray-200 dark:border-gray-800">
+        Comments
+      </h2>
       
-      {/* Comment Form */}
-      {auth.currentUser ? (
-        <form onSubmit={handleSubmitComment} className="mb-8">
-          <div className="flex space-x-4">
-            <div className="flex-shrink-0">
-              <img
-                src={auth.currentUser.photoURL || '/default-avatar.png'}
-                alt={auth.currentUser.displayName || 'User'}
-                className="h-10 w-10 rounded-full"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-                rows={3}
-              />
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={!newComment.trim()}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                >
-                  Comment
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-      ) : (
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
-          <p className="text-gray-600 dark:text-gray-400">Please sign in to comment</p>
-        </div>
-      )}
-
       {/* Comments List */}
-      <div className="space-y-6">
+      <div className={`space-y-4 ${isModal ? 'flex-1 overflow-y-auto px-4' : ''}`}>
         {comments.map((comment) => (
-          <div key={comment.id} className="flex space-x-4">
+          <div key={comment.id} className="flex space-x-3">
             <div className="flex-shrink-0">
               <img
                 src={comment.userPhotoUrl || '/default-avatar.png'}
                 alt={comment.userName}
-                className="h-10 w-10 rounded-full"
+                className="h-8 w-8 rounded-full"
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {comment.userName}
-                </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(comment.createdAt)}
-                </span>
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 max-w-[85%] inline-block">
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="font-medium text-sm text-gray-900 dark:text-white">
+                    {comment.userName}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatDate(comment.createdAt)}
+                  </span>
+                </div>
+                <p className="text-gray-800 dark:text-gray-200 text-sm break-words">{comment.text}</p>
               </div>
-              <p className="mt-1 text-gray-800 dark:text-gray-200">{comment.text}</p>
-              <div className="mt-2 flex items-center space-x-4">
+              <div className="mt-1 flex items-center space-x-4">
                 <button
                   onClick={() => handleLikeComment(comment.id, comment.likes)}
-                  className={`flex items-center space-x-1 text-sm ${comment.likes.includes(auth.currentUser?.uid || '') ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}
+                  className={`flex items-center space-x-1 text-xs ${comment.likes.includes(auth.currentUser?.uid || '') ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}
                 >
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4"
                     fill={comment.likes.includes(auth.currentUser?.uid || '') ? 'currentColor' : 'none'}
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -233,7 +201,7 @@ const CommentSection = ({ projectId }: CommentSectionProps) => {
                 {auth.currentUser?.uid === comment.userId && (
                   <button
                     onClick={() => handleDeleteComment(comment.id, comment.userId)}
-                    className="text-sm text-red-500 hover:text-red-600 transition-colors duration-200"
+                    className="text-xs text-red-500 hover:text-red-600 transition-colors duration-200"
                   >
                     Delete
                   </button>
@@ -244,8 +212,47 @@ const CommentSection = ({ projectId }: CommentSectionProps) => {
         ))}
       </div>
 
+      {/* Comment Form */}
+      <div className={`${isModal ? 'sticky bottom-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4' : 'mt-6'}`}>
+        {auth.currentUser ? (
+          <form onSubmit={handleSubmitComment} className="relative">
+            <div className="flex items-end space-x-2">
+              <div className="flex-shrink-0">
+                <img
+                  src={auth.currentUser.photoURL || '/default-avatar.png'}
+                  alt={auth.currentUser.displayName || 'User'}
+                  className="h-8 w-8 rounded-full"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Type a message..."
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none text-sm"
+                  rows={1}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!newComment.trim()}
+                className="flex-shrink-0 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Please sign in to comment</p>
+          </div>
+        )}
+      </div>
+
       {error && (
-        <div className="text-red-500 dark:text-red-400 text-center py-4">
+        <div className="text-red-500 dark:text-red-400 text-center py-4 text-sm">
           {error}
         </div>
       )}

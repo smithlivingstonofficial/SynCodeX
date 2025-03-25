@@ -34,6 +34,7 @@ const ProjectView = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
     const fetchProjectAndChannel = async () => {
@@ -127,7 +128,7 @@ const ProjectView = () => {
       <Navbar />
       <Sidebar />
       <div className="pl-0 md:pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
-        <div className="max-w-6xl mx-auto p-3 md:p-6">
+        <div className="max-w-[1920px] mx-auto p-3 md:p-6 grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6">
           <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-200 dark:border-gray-700/30">
             {/* Project Thumbnail */}
             {project.thumbnailUrl && (
@@ -140,7 +141,7 @@ const ProjectView = () => {
               </div>
             )}
 
-            {/* Project Title and Like Button */}
+            {/* Project Title and Like/Comment Buttons */}
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6 mb-4 md:mb-6">
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -154,25 +155,36 @@ const ProjectView = () => {
                   })}
                 </div>
               </div>
-              <button
-                onClick={handleLike}
-                disabled={!auth.currentUser || likeLoading}
-                className={`flex items-center justify-center md:justify-start space-x-2 px-4 py-2 rounded-xl transition-all duration-200 ${isLiked ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300'} hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 w-full md:w-auto`}
-              >
-                <svg
-                  className={`w-5 h-5 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`}
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleLike}
+                  disabled={!auth.currentUser || likeLoading}
+                  className={`flex items-center justify-center md:justify-start space-x-2 px-4 py-2 rounded-xl transition-all duration-200 ${isLiked ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300'} hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 w-full md:w-auto`}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                <span>{likeCount}</span>
-              </button>
+                  <svg
+                    className={`w-5 h-5 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  <span>{likeCount}</span>
+                </button>
+                <button
+                  onClick={() => setShowComments(true)}
+                  className="lg:hidden flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:scale-105 transition-all duration-200 w-full md:w-auto"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span>Comments</span>
+                </button>
+              </div>
             </div>
 
             {/* Project Description */}
@@ -202,10 +214,37 @@ const ProjectView = () => {
               </div>
             )}
           </div>
-          {/* Add Comment Section */}
-          <CommentSection projectId={projectId || ''} />
+
+          {/* Comments Section - Desktop */}
+          <div className="hidden lg:block sticky top-[calc(3.5rem+1.5rem)] h-[calc(100vh-5rem)]">
+            <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-200 dark:border-gray-700/30 h-full overflow-hidden">
+              <CommentSection projectId={projectId || ''} />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Comments Modal - Mobile */}
+      {showComments && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowComments(false)} />
+          <div className="absolute inset-x-0 bottom-0 bg-white dark:bg-gray-950 rounded-t-2xl max-h-[80vh] flex flex-col transform transition-transform duration-300 ease-out">
+            <div className="p-4 flex-1 overflow-hidden">
+              <CommentSection projectId={projectId || ''} isModal={true} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Comment Button - Mobile */}
+      <button
+        onClick={() => setShowComments(true)}
+        className="fixed right-4 bottom-4 lg:hidden z-40 p-4 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </button>
     </div>
   );
 };
