@@ -127,7 +127,7 @@ const Home = () => {
       <Sidebar />
 
       {/* Main Content */}
-      <main className={`pt-14 transition-all duration-200 bg-white dark:bg-gray-950 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
+      <main className={`pt-14 transition-all duration-200 bg-white dark:bg-gray-950 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-16'}`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
           {projects.map((project) => (
             <Link

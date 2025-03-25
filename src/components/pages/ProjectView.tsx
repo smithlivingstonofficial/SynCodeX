@@ -39,7 +39,6 @@ const ProjectView = () => {
       if (!projectId) return;
 
       try {
-        // Fetch project data
         const projectDoc = await getDoc(doc(db, 'projects', projectId));
         if (!projectDoc.exists()) {
           setError('Project not found');
@@ -52,7 +51,6 @@ const ProjectView = () => {
         setLikeCount(projectData.likes?.length || 0);
         setIsLiked(projectData.likes?.includes(auth.currentUser?.uid || '') || false);
 
-        // Fetch channel data
         const channelDoc = await getDoc(doc(db, 'channels', projectData.userId));
         if (channelDoc.exists()) {
           setChannel(channelDoc.data() as ChannelData);
@@ -100,7 +98,7 @@ const ProjectView = () => {
       <div className="min-h-screen bg-white dark:bg-gray-950">
         <Navbar />
         <Sidebar />
-        <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+        <div className="pl-[var(--sidebar-width)] md:pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
           <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
@@ -114,7 +112,7 @@ const ProjectView = () => {
       <div className="min-h-screen bg-white dark:bg-gray-950">
         <Navbar />
         <Sidebar />
-        <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+        <div className="pl-[var(--sidebar-width)] md:pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
           <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
             <div className="text-red-500 dark:text-red-400">{error || 'Project not found'}</div>
           </div>
@@ -127,12 +125,12 @@ const ProjectView = () => {
     <div className="min-h-screen bg-white dark:bg-gray-950">
       <Navbar />
       <Sidebar />
-      <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700/30">
+      <div className="pl-0 md:pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+        <div className="max-w-6xl mx-auto p-3 md:p-6">
+          <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-200 dark:border-gray-700/30">
             {/* Project Thumbnail */}
             {project.thumbnailUrl && (
-              <div className="relative w-full h-[400px] mb-6 rounded-xl overflow-hidden">
+              <div className="relative w-full h-[200px] md:h-[400px] mb-4 md:mb-6 rounded-lg md:rounded-xl overflow-hidden">
                 <img
                   src={project.thumbnailUrl}
                   alt={project.title}
@@ -142,9 +140,9 @@ const ProjectView = () => {
             )}
 
             {/* Project Title and Like Button */}
-            <div className="flex items-start justify-between mb-6">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6 mb-4 md:mb-6">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   {project.title}
                 </h1>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -158,7 +156,7 @@ const ProjectView = () => {
               <button
                 onClick={handleLike}
                 disabled={!auth.currentUser || likeLoading}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 ${isLiked ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300'} hover:scale-105 disabled:opacity-50 disabled:hover:scale-100`}
+                className={`flex items-center justify-center md:justify-start space-x-2 px-4 py-2 rounded-xl transition-all duration-200 ${isLiked ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300'} hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 w-full md:w-auto`}
               >
                 <svg
                   className={`w-5 h-5 ${isLiked ? 'fill-current' : 'stroke-current fill-none'}`}
@@ -177,17 +175,17 @@ const ProjectView = () => {
             </div>
 
             {/* Project Description */}
-            <div className="prose dark:prose-invert max-w-none mb-6">
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+            <div className="prose dark:prose-invert max-w-none mb-4 md:mb-6">
+              <p className="text-sm md:text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {project.description}
               </p>
             </div>
 
             {/* Channel Profile */}
             {channel && (
-              <div className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl mb-6 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer">
-                <Link to={`/channel/${channel.handle}`} className="flex items-center space-x-4 flex-1">
-                  <div className="w-16 h-16 rounded-full overflow-hidden">
+              <div className="flex items-center space-x-3 md:space-x-4 p-3 md:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg md:rounded-xl mb-4 md:mb-6 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer">
+                <Link to={`/channel/${channel.handle}`} className="flex items-center space-x-3 md:space-x-4 flex-1">
+                  <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden flex-shrink-0">
                     <img
                       src={channel.logoUrl || '/default-avatar.png'}
                       alt={channel.name}
@@ -195,42 +193,13 @@ const ProjectView = () => {
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+                    <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
                       {channel.name}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                      @{channel.handle}
-                    </p>
                   </div>
                 </Link>
               </div>
             )}
-
-            {/* Tags */}
-            {project.tags && project.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                {project.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Programming Languages */}
-            <div className="flex flex-wrap gap-2">
-              {project.programmingLanguages.map((lang, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm"
-                >
-                  {lang}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </div>
