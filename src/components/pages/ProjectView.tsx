@@ -4,6 +4,7 @@ import { auth, db } from '../../firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
+import CommentSection from '../shared/CommentSection';
 
 interface ProjectData {
   projectId: string;
@@ -201,6 +202,8 @@ const ProjectView = () => {
               </div>
             )}
           </div>
+          {/* Add Comment Section */}
+          <CommentSection projectId={projectId || ''} />
         </div>
       </div>
     </div>
