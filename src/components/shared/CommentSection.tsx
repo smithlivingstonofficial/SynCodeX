@@ -150,13 +150,13 @@ const CommentSection = ({ projectId, isModal = false }: CommentSectionProps) => 
   }
 
   return (
-    <div className={`${isModal ? 'h-full flex flex-col' : 'mt-8'} space-y-6`}>
+    <div className={`${isModal ? 'h-full flex flex-col' : 'mt-8'} space-y-6 relative flex flex-col ${isModal ? 'h-[100dvh]' : 'h-[600px]'}`}>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white sticky top-0 bg-white dark:bg-gray-950 py-4 z-10 border-b border-gray-200 dark:border-gray-800">
         Comments
       </h2>
       
       {/* Comments List */}
-      <div className={`space-y-4 ${isModal ? 'flex-1 overflow-y-auto px-4' : ''}`}>
+      <div className="flex-1 overflow-y-auto space-y-4 px-4 pb-20 overscroll-contain">
         {comments.map((comment) => (
           <div key={comment.id} className="flex space-x-3">
             <div className="flex-shrink-0">
@@ -212,52 +212,51 @@ const CommentSection = ({ projectId, isModal = false }: CommentSectionProps) => 
         ))}
       </div>
 
-      {/* Comment Form */}
-      <div className={`${isModal ? 'sticky bottom-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4' : 'mt-6'}`}>
-        {auth.currentUser ? (
-          <form onSubmit={handleSubmitComment} className="relative">
-            <div className="flex items-end space-x-2">
-              <div className="flex-shrink-0">
-                <img
-                  src={auth.currentUser.photoURL || '/default-avatar.png'}
-                  alt={auth.currentUser.displayName || 'User'}
-                  className="h-8 w-8 rounded-full"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Type a message..."
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none text-sm"
-                  rows={1}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!newComment.trim()}
-                className="flex-shrink-0 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
-            <p className="text-gray-600 dark:text-gray-400 text-sm">Please sign in to comment</p>
-          </div>
+      {/* Comment Input Section - Fixed at Bottom */}
+      <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 p-4 z-10">
+        {error && (
+          <div className="text-red-500 dark:text-red-400 text-sm mb-2">{error}</div>
+        )}
+        <form onSubmit={handleSubmitComment} className="flex space-x-2">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Write a comment..."
+            className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={!auth.currentUser || loading}
+          />
+          <button
+            type="submit"
+            disabled={!auth.currentUser || loading}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              'Send'
+            )}
+          </button>
+        </form>
+        {!auth.currentUser && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Please sign in to comment
+          </p>
         )}
       </div>
-
-      {error && (
-        <div className="text-red-500 dark:text-red-400 text-center py-4 text-sm">
-          {error}
+      {comments.length === 0 && (
+        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+          No comments yet. Be the first to comment!
         </div>
       )}
     </div>
   );
+
+    {error && (
+      <div className="text-red-500 dark:text-red-400 text-center py-4 text-sm">
+        {error}
+      </div>
+    )}
 };
 
 export default CommentSection;

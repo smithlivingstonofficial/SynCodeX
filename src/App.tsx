@@ -8,6 +8,8 @@ import Profile from './components/pages/Profile';
 import Upload from './components/pages/Upload';
 import ProjectView from './components/pages/ProjectView';
 import Channel from './components/pages/Channel';
+import TeamCreate from './components/team/TeamCreate';
+import Teams from './components/team/Teams';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -48,6 +50,9 @@ function App() {
         <Route path="/upload" element={user ? <Upload /> : <Login />} />
         <Route path="/:projectId" element={<ProjectView />} />
         <Route path="/channel/:handle" element={<Channel />} />
+
+        <Route path="/teams" element={user? <Teams /> : <Login />} />
+        <Route path="/create" element={user? <TeamCreate /> : <Login />} />
       </Routes>
     </Router>
   );
