@@ -102,18 +102,16 @@ service cloud.firestore {
 
     // Teams collection rules
     match /teams/{teamId} {
-      allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.createdBy == request.auth.uid;
-      allow update: if isAuthenticated() && (resource.data.createdBy == request.auth.uid || 
-        resource.data.members[request.auth.uid] in ['admin', 'member']);
-      allow delete: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
-
-      // Team members subcollection
-      match /members/{memberId} {
-        allow read: if true;
-        allow write: if isAuthenticated() && 
-          (get(/databases/$(database)/documents/teams/$(teamId)).data.createdBy == request.auth.uid ||
-          get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] == 'admin');
+      allow read: if isAuthenticated() && resource.data.members[request.auth.uid] != null;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.members[request.auth.uid] == 'admin';
+      allow delete: if isAuthenticated() && resource.data.members[request.auth.uid] == 'admin';
+      
+      // Team messages subcollection
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+        allow create: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+        allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
       }
     }
 

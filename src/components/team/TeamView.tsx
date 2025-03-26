@@ -70,7 +70,7 @@ const TeamView = () => {
         setTeam(formattedTeamData);
 
         // Fetch team members
-        const usersRef = collection(db, 'users');
+        const profilesRef = collection(db, 'profiles');
         const memberIds = Object.keys(formattedTeamData.members);
         
         if (memberIds.length === 0) {
@@ -79,7 +79,7 @@ const TeamView = () => {
           return;
         }
 
-        const membersQuery = query(usersRef, where('uid', 'in', memberIds));
+        const membersQuery = query(profilesRef, where('uid', 'in', memberIds));
         const membersSnapshot = await getDocs(membersQuery);
 
         const membersData = membersSnapshot.docs.map(doc => ({
@@ -152,10 +152,10 @@ const TeamView = () => {
       <Sidebar />
       <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
         <div className="max-w-7xl mx-auto p-4 md:p-8">
-          {/* Team Header */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
+          {/* Team Card */}
+          <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl border border-gray-200 dark:border-gray-700/30 p-6 mb-6">
+            <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-6">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
                 {team.profileUrl ? (
                   <img
                     src={team.profileUrl}
@@ -165,7 +165,7 @@ const TeamView = () => {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
                     <svg
-                      className="w-8 h-8"
+                      className="w-12 h-12"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -180,11 +180,18 @@ const TeamView = () => {
                   </div>
                 )}
               </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   {team.name}
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">{team.bio}</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{team.bio}</p>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Created {team.createdAt?.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </div>
               </div>
             </div>
           </div>
