@@ -7,6 +7,7 @@ import Login from './components/pages/Login';
 import Profile from './components/pages/Profile';
 import Upload from './components/pages/Upload';
 import ProjectView from './components/pages/ProjectView';
+import Projects from './components/project/Projects';
 import Channel from './components/pages/Channel';
 import TeamCreate from './components/team/TeamCreate';
 import Teams from './components/team/Teams';
@@ -50,6 +51,7 @@ function App() {
         <Route path="/profile" element={user ? <Profile /> : <Login />} />
         <Route path="/upload" element={user ? <Upload /> : <Login />} />
         <Route path="/:projectId" element={<ProjectView />} />
+        <Route path="/projects" element={user? <Projects /> : <Login />} />
         <Route path="/channel/:handle" element={<Channel />} />
 
         <Route path="/teams" element={user ? <Teams /> : <Login />} />
