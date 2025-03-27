@@ -217,16 +217,17 @@ const TeamView = () => {
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900/20">
-            <TeamChat teamId={team.id} />
+          <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900/20 flex">
+            <div className="flex-1">
+              <TeamChat teamId={team.id} />
+            </div>
+            {/* Members List */}
+            <MembersList
+              members={members}
+              isOpen={showMembers}
+              onClose={() => setShowMembers(false)}
+            />
           </div>
-
-          {/* Members List */}
-          <MembersList
-            members={members}
-            isOpen={showMembers}
-            onClose={() => setShowMembers(false)}
-          />
         </div>
       </div>
     </div>
