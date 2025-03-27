@@ -5,6 +5,7 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 import TeamChat from './TeamChat';
+import MembersList from './MembersList';
 
 interface TeamData {
   id: string;
@@ -30,6 +31,7 @@ const TeamView = () => {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
     const fetchTeamAndMembers = async () => {
@@ -151,100 +153,80 @@ const TeamView = () => {
       <Navbar />
       <Sidebar />
       <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
-        <div className="max-w-7xl mx-auto p-4 md:p-8">
-          {/* Team Card */}
-          <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl border border-gray-200 dark:border-gray-700/30 p-6 mb-6">
-            <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-6">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
-                {team.profileUrl ? (
-                  <img
-                    src={team.profileUrl}
-                    alt={team.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <svg
-                      className="w-12 h-12"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {team.name}
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">{team.bio}</p>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Created {team.createdAt?.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-6">
-            {/* Chat Section */}
-            <div className="h-full">
-              <TeamChat teamId={teamId!} />
-            </div>
-
-            {/* Members Section */}
-            <div className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl border border-gray-200 dark:border-gray-700/30 p-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Team Members ({members.length})
-              </h2>
-              <div className="space-y-4">
-                {members.map(member => (
-                  <div
-                    key={member.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800/50 transition-colors"
+        <div className="h-[calc(100vh-3.5rem)] flex flex-col">
+          {/* Team Header */}
+          <div 
+            className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/30 p-4 flex items-center space-x-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/50 transition-colors"
+            onClick={() => setShowMembers(!showMembers)}
+          >
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
+              {team.profileUrl ? (
+                <img
+                  src={team.profileUrl}
+                  alt={team.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800">
-                        {member.photoURL ? (
-                          <img
-                            src={member.photoURL}
-                            alt={member.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            {member.name[0].toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      {member.lastActive && Date.now() - member.lastActive.getTime() < 300000 && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 dark:text-white truncate">
-                        {member.name}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                        {member.role}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                </div>
+              )}
             </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                {team.name}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {members.length} members
+              </p>
+            </div>
+            <button
+              className="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle meet functionality
+                console.log('Start meeting');
+              }}
+            >
+              <svg
+                className="w-6 h-6 text-gray-600 dark:text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            </button>
           </div>
+
+          {/* Chat Area */}
+          <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900/20">
+            <TeamChat teamId={team.id} />
+          </div>
+
+          {/* Members List */}
+          <MembersList
+            members={members}
+            isOpen={showMembers}
+            onClose={() => setShowMembers(false)}
+          />
         </div>
       </div>
     </div>
