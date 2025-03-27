@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@firebase/auth": "^1.9.1",
+    "@jitsi/react-sdk": "^1.4.4",
     "firebase": "^11.5.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

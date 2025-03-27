@@ -196,8 +196,7 @@ const TeamView = () => {
               className="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
-                // Handle meet functionality
-                console.log('Start meeting');
+                navigate(`/teams/${team.id}/meet`);
               }}
             >
               <svg
