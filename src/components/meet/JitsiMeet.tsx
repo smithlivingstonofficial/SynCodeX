@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 
 interface JitsiMeetProps {
@@ -52,7 +51,8 @@ const JitsiMeet: React.FC<JitsiMeetProps> = ({ teamName, teamId, userName, onClo
           ]
         }}
         userInfo={{
-          displayName: userName
+          displayName: userName,
+          email: 'user@example.com' // Added required email field
         }}
         onApiReady={(externalApi) => {
           externalApi.addEventListeners({
