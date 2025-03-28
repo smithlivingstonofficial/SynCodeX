@@ -14,6 +14,7 @@
     "@jitsi/react-sdk": "^1.4.4",
     "@monaco-editor/react": "^4.7.0",
     "firebase": "^11.5.0",
+    "lodash": "^4.17.21",
     "monaco-editor": "^0.52.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
