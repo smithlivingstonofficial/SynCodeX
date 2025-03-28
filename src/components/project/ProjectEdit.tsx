@@ -156,10 +156,11 @@ const ProjectEdit = () => {
       <Navbar />
       <Sidebar />
       <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
-        <div className="max-w-3xl mx-auto p-4 md:p-8">
+        <div className="max-w-4xl mx-auto p-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">Edit Project</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
               <input
@@ -281,7 +282,7 @@ const ProjectEdit = () => {
                   hover:file:bg-blue-100 dark:hover:file:bg-blue-900"
               />
             </div>
-
+            </div>  
             {error && (
               <div className="text-red-500 dark:text-red-400 text-sm">{error}</div>
             )}
