@@ -13,6 +13,7 @@ import TeamCreate from './components/team/TeamCreate';
 import Teams from './components/team/Teams';
 import TeamView from './components/team/TeamView';
 import Meet from './components/meet/Meet';
+import TeamEditor from './components/team/editor/TeamEditor';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -59,6 +60,7 @@ function App() {
         <Route path="/teams/create" element={user ? <TeamCreate /> : <Login />} />
         <Route path="/teams/:teamId" element={user ? <TeamView /> : <Login />} />
         <Route path="/teams/:teamId/meet" element={<Meet />} />
+        <Route path="/teams/:teamId/editor" element={user ? <TeamEditor /> : <Login />} />
       </Routes>
     </Router>
   );

@@ -12,7 +12,9 @@
   "dependencies": {
     "@firebase/auth": "^1.9.1",
     "@jitsi/react-sdk": "^1.4.4",
+    "@monaco-editor/react": "^4.7.0",
     "firebase": "^11.5.0",
+    "monaco-editor": "^0.52.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0"
