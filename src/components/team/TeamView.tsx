@@ -247,6 +247,7 @@ const TeamView = () => {
               members={members}
               isOpen={showMembers}
               onClose={() => setShowMembers(false)}
+              teamId={team.id}
             />
           </div>
         </div>

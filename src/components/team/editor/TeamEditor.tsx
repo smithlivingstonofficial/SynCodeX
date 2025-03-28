@@ -33,7 +33,6 @@ const TeamEditor = () => {
   const [cursors, setCursors] = useState<CursorPosition[]>([]);
   const [error, setError] = useState('');
   const [version, setVersion] = useState(0);
-  const [lastSavedVersion, setLastSavedVersion] = useState(0);
   const [isCollabInitialized, setIsCollabInitialized] = useState(false);
 
   const initializeCollab = async () => {
@@ -63,11 +62,10 @@ const TeamEditor = () => {
         const data = collabDoc.data();
         setCode(data.content || '');
         setVersion(data.version || 1);
-        setLastSavedVersion(data.version || 1);
         setIsCollabInitialized(true);
         return;
       }
-  
+
       // Create new collab document
       await setDoc(collabRef, {
         content: code,
@@ -76,10 +74,9 @@ const TeamEditor = () => {
         userName: user.displayName || user.email,
         version: 1
       });
-  
+
       setIsCollabInitialized(true);
       setVersion(1);
-      setLastSavedVersion(1);
     } catch (error) {
       console.error('Error initializing collaboration:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize collaboration';
@@ -101,7 +98,6 @@ const TeamEditor = () => {
             const data = doc.data() as CollabData;
             setCode(data.content);
             setVersion(data.version);
-            setLastSavedVersion(data.version);
             setIsCollabInitialized(true);
           }
           setIsLoading(false);
