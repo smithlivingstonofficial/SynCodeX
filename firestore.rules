@@ -94,9 +94,22 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
 
       // Comments subcollection
-      match /comments/{commentId} {        allow read: if true;
+      match /comments/{commentId} {
+        allow read: if true;
         allow create: if isAuthenticated()
-          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid;
+      }
+
+      // Collab subcollection for real-time collaboration
+      match /collab/{docId} {
+        allow read: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+        allow create, update: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+      }
+
+      // Cursors subcollection for real-time cursor tracking
+      match /cursors/{userId} {
+        allow read: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+        allow write: if isAuthenticated() && request.auth.uid == userId && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
       }
     }
 
@@ -106,6 +119,18 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && resource.data.members[request.auth.uid] == 'admin';
       allow delete: if isAuthenticated() && resource.data.members[request.auth.uid] == 'admin';
+      
+      // Collab subcollection for real-time collaboration
+      match /collab/{docId} {
+        allow read: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+        allow create, update: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+      }
+
+      // Cursors subcollection for real-time cursor tracking
+      match /cursors/{userId} {
+        allow read: if isAuthenticated() && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+        allow write: if isAuthenticated() && request.auth.uid == userId && get(/databases/$(database)/documents/teams/$(teamId)).data.members[request.auth.uid] != null;
+      }
       
       // Team messages subcollection
       match /messages/{messageId} {
