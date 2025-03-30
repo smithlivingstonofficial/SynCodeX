@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
+import QuestionList from './QuestionList';
 
 const Community = () => {
   const [activeTab, setActiveTab] = useState<'blogs' | 'questions'>('blogs');
@@ -69,9 +70,7 @@ const Community = () => {
                   Blog posts will be displayed here
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  Questions will be displayed here
-                </div>
+                <QuestionList />
               )}
             </div>
 
