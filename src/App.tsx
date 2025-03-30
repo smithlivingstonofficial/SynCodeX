@@ -18,6 +18,7 @@ import TeamEditor from './components/team/editor/TeamEditor';
 import Community from './components/community/Community';
 import BlogPost from './components/community/BlogPost';
 import Question from './components/community/Question';
+import Dashboard from './components/pages/Dashboard';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -60,6 +61,7 @@ function App() {
         <Route path="/projects" element={user? <Projects /> : <Login />} />
         <Route path="/projects/:projectId" element={user? <ProjectEdit /> : <Login />} />
         <Route path="/channel/:handle" element={<Channel />} />
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Login />} />
 
         <Route path="/teams" element={user ? <Teams /> : <Login />} />
         <Route path="/teams/create" element={user ? <TeamCreate /> : <Login />} />

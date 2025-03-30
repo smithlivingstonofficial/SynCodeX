@@ -5,6 +5,8 @@ import { collection, addDoc, Timestamp, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 interface BlogPostData {
   title: string;
@@ -31,6 +33,22 @@ const BlogPost = () => {
     tags: [],
     communityId: ''
   });
+
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'script': 'sub'}, { 'script': 'super' }],
+      [{ 'indent': '-1'}, { 'indent': '+1' }],
+      [{ 'direction': 'rtl' }],
+      [{ 'color': [] }, { 'background': [] }],
+      [{ 'font': [] }],
+      [{ 'align': [] }],
+      ['link', 'image', 'video'],
+      ['clean']
+    ],
+  };
 
   useEffect(() => {
     const fetchCommunities = async () => {
@@ -118,6 +136,10 @@ const BlogPost = () => {
     }
   };
 
+  const handleContentChange = (content: string) => {
+    setFormData(prev => ({ ...prev, content }));
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       <Navbar />
@@ -161,16 +183,13 @@ const BlogPost = () => {
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Content</label>
-              <textarea
-                id="content"
-                name="content"
-                required
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
+              <ReactQuill
+                theme="snow"
                 value={formData.content}
-                onChange={handleInputChange}
-                rows={15}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Write your blog content here..."
+                onChange={handleContentChange}
+                modules={modules}
+                className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md"
               />
             </div>
 
@@ -257,3 +276,40 @@ const BlogPost = () => {
 };
 
 export default BlogPost;
+
+.ql-editor {
+  min-height: 300px;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 2rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ql-toolbar {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0.75rem;
+}
+
+.dark .ql-toolbar {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .ql-editor {
+  background: #111827;
+  color: white;
+}
+
+.ql-container {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .ql-container {
+  border-color: #374151;
+}

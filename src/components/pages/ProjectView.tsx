@@ -5,6 +5,7 @@ import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firest
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 import CommentSection from '../shared/CommentSection';
+import { useProjectViews } from '../../hooks/useProjectViews';
 
 interface ProjectData {
   projectId: string;
@@ -27,6 +28,7 @@ interface ChannelData {
 
 const ProjectView = () => {
   const { projectId } = useParams();
+  const { viewCount } = useProjectViews(projectId || '');
   const [project, setProject] = useState<ProjectData | null>(null);
   const [channel, setChannel] = useState<ChannelData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -147,12 +149,19 @@ const ProjectView = () => {
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   {project.title}
                 </h1>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {project.uploadedAt?.toDate().toLocaleDateString('en-US', {
+                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-4">
+                  <span>{project.uploadedAt?.toDate().toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                  })}
+                  })}</span>
+                  <span className="flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>{viewCount} views</span>
+                  </span>
                 </div>
               </div>
               <div className="flex space-x-2">
@@ -177,7 +186,7 @@ const ProjectView = () => {
                 </button>
                 {auth.currentUser?.uid === project.userId && (
                   <Link
-                    to={`/projects/${projectId}/edit`}
+                    to={`/projects/${projectId}`}
                     className="flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:scale-105 transition-all duration-200 w-full md:w-auto"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
