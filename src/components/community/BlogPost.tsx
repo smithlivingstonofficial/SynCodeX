@@ -7,6 +7,9 @@ import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github-dark.css';
+import './BlogPost.css';
 
 interface BlogPostData {
   title: string;
@@ -35,17 +38,14 @@ const BlogPost = () => {
   });
 
   const modules = {
+    syntax: {
+      highlight: (text: string) => hljs.highlightAuto(text).value,
+    },
     toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'header': [1, 2, false] }],
+      ['bold', 'italic'],
+      ['link', 'blockquote', 'code-block', 'image'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'script': 'sub'}, { 'script': 'super' }],
-      [{ 'indent': '-1'}, { 'indent': '+1' }],
-      [{ 'direction': 'rtl' }],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'font': [] }],
-      [{ 'align': [] }],
-      ['link', 'image', 'video'],
       ['clean']
     ],
   };
@@ -141,23 +141,20 @@ const BlogPost = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-gray-950">
       <Navbar />
       <Sidebar />
-      <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">Create a New Blog Post</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="community" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Select Community</label>
+      <div className="pl-[var(--sidebar-width)] pt-14 flex-1 transition-[padding] duration-200">
+        <div className="max-w-4xl mx-auto px-4 py-8 md:px-8 h-full flex flex-col">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 space-y-8">
+            <div className="flex-1 space-y-6">
               <select
                 id="community"
                 name="communityId"
                 required
                 value={formData.communityId}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="w-full max-w-xs px-4 py-2 text-sm rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
                 <option value="">Select a community</option>
                 {communities.map(community => (
@@ -166,10 +163,7 @@ const BlogPost = () => {
                   </option>
                 ))}
               </select>
-            </div>
 
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
               <input
                 type="text"
                 id="title"
@@ -177,67 +171,68 @@ const BlogPost = () => {
                 required
                 value={formData.title}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Enter your blog title"
+                className="w-full text-4xl font-bold border-0 bg-transparent focus:ring-0 focus:outline-none placeholder-gray-400 dark:placeholder-gray-600"
+                placeholder="Title"
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
-              <ReactQuill
-                theme="snow"
-                value={formData.content}
-                onChange={handleContentChange}
-                modules={modules}
-                className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md"
-              />
-            </div>
+              <div className="flex-1 relative">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.content}
+                  onChange={handleContentChange}
+                  modules={modules}
+                  className="h-[calc(100vh-24rem)] prose prose-lg max-w-none dark:prose-invert"
+                  placeholder="Tell your story..."
+                />
+              </div>
 
-            <div>
-              <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cover Image</label>
-              <input
-                type="file"
-                id="coverImage"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-medium
-                  file:bg-blue-50 file:text-blue-700
-                  dark:file:bg-blue-900/50 dark:file:text-blue-200
-                  hover:file:bg-blue-100 dark:hover:file:bg-blue-900"
-              />
-            </div>
+              <div className="mt-4">
+                <input
+                  type="file"
+                  id="coverImage"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="coverImage"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Add Cover Image
+                </label>
+              </div>
 
-            <div>
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
-              <input
-                type="text"
-                id="tags"
-                placeholder="Press Enter to add tags"
-                onKeyPress={handleTagChange}
-                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              <div className="mt-2 flex flex-wrap gap-2">
-                {formData.tags.map(tag => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({
-                        ...prev,
-                        tags: prev.tags.filter(t => t !== tag)
-                      }))}
-                      className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              <div>
+                <input
+                  type="text"
+                  id="tags"
+                  placeholder="Add up to 5 tags..."
+                  onKeyPress={handleTagChange}
+                  className="w-full px-4 py-2 text-sm border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-full"
                     >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          tags: prev.tags.filter(t => t !== tag)
+                        }))}
+                        className="ml-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -245,7 +240,7 @@ const BlogPost = () => {
               <div className="text-red-500 dark:text-red-400 text-sm">{error}</div>
             )}
 
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 sticky bottom-0 bg-white dark:bg-gray-950 py-4 border-t border-gray-200 dark:border-gray-800">
               <button
                 type="button"
                 onClick={() => navigate('/community')}
@@ -256,7 +251,7 @@ const BlogPost = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="flex items-center">
@@ -264,7 +259,7 @@ const BlogPost = () => {
                     Publishing...
                   </div>
                 ) : (
-                  'Publish Post'
+                  'Publish'
                 )}
               </button>
             </div>
@@ -276,40 +271,3 @@ const BlogPost = () => {
 };
 
 export default BlogPost;
-
-.ql-editor {
-  min-height: 300px;
-  font-size: 16px;
-  line-height: 1.6;
-  padding: 2rem;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.ql-toolbar {
-  border-top-left-radius: 0.375rem;
-  border-top-right-radius: 0.375rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 0.75rem;
-}
-
-.dark .ql-toolbar {
-  background: #1f2937;
-  border-color: #374151;
-}
-
-.dark .ql-editor {
-  background: #111827;
-  color: white;
-}
-
-.ql-container {
-  border-bottom-left-radius: 0.375rem;
-  border-bottom-right-radius: 0.375rem;
-  border: 1px solid #e2e8f0;
-}
-
-.dark .ql-container {
-  border-color: #374151;
-}

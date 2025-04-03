@@ -1,0 +1,29 @@
+flowchart TD
+    A("Start: User initiates project upload") --> B["Syncodex Project Upload Page"]
+    B --> C1{"Is the user logged in?"}
+    C1 -- Yes --> D1("Show upload interface: Drag & Drop / Select File and Upload")
+    C1 -- No --> E1("Error: Prompt user to log in")
+    E1 --> N1["Firebase Authentication: Verify user session"]
+    N1 -- Authenticated --> B
+    N1 -- Not Authenticated --> N2["Redirect to Login Page"]
+    D1 --> F["Zip Processing"]
+    F --> F1("Upload project ZIP file to Firebase Storage")
+    F1 --> F2("Extract files and store in Firebase Storage")
+    F2 --> G["Visibility Settings"]
+    G --> G1("User selects visibility: Public or Private")
+    G1 --> G2{"Public or Private?"}
+    G2 -- Public --> G4("If Public: Index project in Firestore Database")
+    G4 --> G5("Project appears in search & public listing")
+    G2 -- Private --> G3("If Private: Restrict access to owner & authorized users")
+    G5 --> H["Store Metadata & Indexing"]
+    H --> H1("Store project metadata (Title, Description, Tags) in Firestore")
+    H1 --> H2("Generate unique Project ID & store in Firestore Database")
+    H2 --> H3("Update Firestore with file paths & visibility settings")
+    I2("Categorize project & find related content") --> I3("Rank project for search & recommendations")
+    I3 --> J["Other Users Discover the Project"]
+    J --> J1{"How do users find the project?"} & K("End: Project is available for access based on settings")
+    J1 --> J2("Through search results (Firestore Query)") & J3("From home feed recommendations") & J4("From direct share & team collaboration")
+    H3 --> I2
+
+
+

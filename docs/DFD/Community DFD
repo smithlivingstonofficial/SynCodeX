@@ -1,0 +1,41 @@
+flowchart TD
+    %% Blog Creation Process
+    A["User Creates a New Blog Post"] --> B["Enter Blog Title, Content, Tags & Category"]
+    B --> C["Select Visibility: Public or Private"]
+    
+    C --> D{"Where to Publish?"}
+    D -- Community --> E["Publish Blog to Community Page"]
+    D -- Channel --> F["Publish Blog to User's Channel Page"]
+    D -- Both --> G["Publish on Community & Channel Page"]
+    
+    E & F & G --> H["Store Blog Content in Firestore Database"]
+    H --> I["Generate Blog ID & Metadata"]
+    I --> J["Index Blog for Search & Filtering"]
+    J --> K["Blog is Visible to Other Users"]
+    
+    %% Blog Interaction Features (Likes & Comments)
+    K --> L["Users Can Like, Comment & Share Blog"]
+    L --> L1["Store Likes & Comments in Firestore (Linked to Blog ID)"]
+    L1 --> K
+    
+    %% Blog Retrieval
+    M["User Visits Community or Channel Page"] --> N["Fetch Blogs from Firestore Based on Visibility"]
+    N --> K
+    
+    %% Question & Answer Section (Like Quora)
+    O["User Asks a Question in the Community"]
+    O --> P["Store Question in Firestore with User Info, Category & Timestamp"]
+    P --> Q["Display Question in Community Q&A Section"]
+    
+    Q --> R["Other Users Can Answer"]
+    R --> S["Store Answers in Firestore (Linked to Question ID)"]
+    S --> T["Display Answers in Thread Format"]
+    
+    %% Question Interaction Features (Likes & Comments)
+    T --> U["Users Can Like & Comment on Answers"]
+    U --> V["Store Likes & Comments in Firestore (Linked to Answer ID)"]
+    V --> T
+
+    %% Blog & Q&A Search
+    W["User Searches for a Blog or Question"] --> X["Fetch Results from Firestore Index"]
+    X --> Y["Display Search Results with Filters (Category, Tags, Date)"]

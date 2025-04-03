@@ -1,0 +1,52 @@
+flowchart TD
+    %% Team Creation & Invitation Process
+    A["User Creates a New Team"] --> B["Enter Team Name & Description"]
+    B --> C["Select Members to Invite"]
+    C --> D{"Invite via Email or Username?"}
+    D -- Email --> E["Send Invitation via Firebase Email Service"]
+    D -- Username --> F["Send Notification via Firestore Database"]
+
+    E --> G{"Did the invited user accept?"}
+    F --> G
+
+    G -- Yes --> H["Add user to Team in Firestore Database"]
+    G -- No --> I["Invitation Pending/Rejected"]
+
+    %% Team Chat Feature
+    H --> J["Team Chat Interface (Similar to WhatsApp Web)"]
+    J --> K["User Sends a Message"]
+
+    %% Message Storage in Firestore
+    K --> K1["Store Message in Firestore with Timestamp"]
+    K1 --> K2["Trigger Firestore Listener for Real-Time Update"]
+    K2 --> K3["Update Chat Window for All Team Members"]
+
+    %% Storing Media Messages
+    J --> L["Send Media & Files"]
+    L --> L1["Upload to Firebase Storage"]
+    L1 --> L2["Store Download URL in Firestore"]
+    L2 --> K3
+
+    %% Retrieve Chat History
+    J --> M1["Retrieve Messages from Firestore on Login"]
+    M1 --> K3
+
+    %% Video Meet Feature
+    J --> M["Video Meet Option (Jitsi Server)"]
+
+    %% Collab Code Editor Feature
+    J --> N{"Open Collab Code Editor?"}
+    
+    N -- Yes --> O["Shared Code Editor (All members can access)"]
+    N -- Private --> P["Private Code Editor (Only creator can access)"]
+
+    O --> Q["Real-Time Code Sync via Firestore & WebSockets"]
+    P --> Q
+
+    %% Storing Code Snippets
+    Q --> R["Stored Code Snippets in Firestore"]
+    Q --> S["Compile & Run Code (if enabled)"]
+
+    %% End of Flow
+    R --> T["Team Collaboration Completed"]
+    S --> T
