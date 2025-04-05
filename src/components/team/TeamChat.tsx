@@ -40,7 +40,7 @@ const TeamChat: React.FC<TeamChatProps> = ({ teamId }) => {
 
       setMessages(newMessages.reverse());
       setLoading(false);
-      scrollToBottom();
+      setTimeout(() => scrollToBottom(), 100);
     });
 
     return () => unsubscribe();
@@ -67,9 +67,9 @@ const TeamChat: React.FC<TeamChatProps> = ({ teamId }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJyZ2JhKDIzMywgMjM0LCAyMzcsIDAuMikiPjwvcmVjdD48L3N2Zz4=')] dark:bg-gray-900/40">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ scrollBehavior: 'smooth' }}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -118,7 +118,7 @@ const TeamChat: React.FC<TeamChatProps> = ({ teamId }) => {
       </div>
 
       {/* Message Input */}
-      <form onSubmit={handleSubmit} className="p-4 bg-white dark:bg-gray-800/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700/30">
+      <form onSubmit={handleSubmit} className="flex-shrink-0 p-4 bg-white dark:bg-gray-800/80 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700/30">
         <div className="flex items-center space-x-2">
           <input
             type="text"

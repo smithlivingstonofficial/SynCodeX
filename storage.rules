@@ -1,11 +1,18 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
-                   && request.resource.size < 5 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+    match /projects/{projectId}/{allPaths=**} {
+      allow read: if request.auth != null && (
+        // Allow access to own projects
+        resource.metadata.userId == request.auth.uid ||
+        // Allow access to public projects
+        exists(/databases/$(database.name)/documents/projects/$(projectId)) &&
+        get(/databases/$(database.name)/documents/projects/$(projectId)).data.visibility == 'public'
+      );
+      allow write: if request.auth != null && (
+        // Allow write to own projects only
+        request.resource.metadata.userId == request.auth.uid
+      );
     }
   }
 }

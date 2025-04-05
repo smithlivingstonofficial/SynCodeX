@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getAnalytics, logEvent } from 'firebase/analytics';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
@@ -96,6 +96,20 @@ const Dashboard = () => {
         <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
           <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <Navbar />
+        <Sidebar />
+        <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+          <div className="flex items-center justify-center min-h-[calc(100vh-3.5rem)]">
+            <p className="text-red-500 dark:text-red-400">{error}</p>
           </div>
         </div>
       </div>

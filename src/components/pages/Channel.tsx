@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
+import { useAuth } from '../../hooks/useAuth';
+import Chat from '../chat/Chat';
 
 interface ChannelData {
   name: string;
   handle: string;
   description: string;
   logoUrl: string;
+  id?: string;
 }
 
 interface Project {
@@ -25,10 +28,15 @@ interface Project {
 
 const Channel = () => {
   const { handle } = useParams();
+  const { user } = useAuth();
   const [channel, setChannel] = useState<ChannelData | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     const fetchChannelAndProjects = async () => {
@@ -47,7 +55,7 @@ const Channel = () => {
         }
 
         const channelDoc = channelSnapshot.docs[0];
-        const channelData = channelDoc.data() as ChannelData;
+        const channelData = { ...channelDoc.data(), id: channelDoc.id } as ChannelData;
         setChannel(channelData);
 
         // Fetch channel's public projects
@@ -64,6 +72,16 @@ const Channel = () => {
         })) as Project[];
 
         setProjects(projectsData);
+
+        // Fetch followers count
+        const followersSnapshot = await getDocs(collection(db, `channels/${channelDoc.id}/followers`));
+        setFollowersCount(followersSnapshot.size);
+
+        // Check if current user is following
+        if (user) {
+          const followerDoc = await getDoc(doc(db, `channels/${channelDoc.id}/followers/${user.uid}`));
+          setIsFollowing(followerDoc.exists());
+        }
       } catch (err) {
         console.error('Error fetching channel data:', err);
         setError('Failed to load channel data');
@@ -73,7 +91,36 @@ const Channel = () => {
     };
 
     fetchChannelAndProjects();
-  }, [handle]);
+  }, [handle, user]);
+
+  const handleFollowToggle = async () => {
+    if (!user || !channel?.id) return;
+
+    setFollowLoading(true);
+    try {
+      const followerRef = doc(db, `channels/${channel.id}/followers/${user.uid}`);
+      const followingRef = doc(db, `channels/${user.uid}/following/${channel.id}`);
+
+      if (isFollowing) {
+        await deleteDoc(followerRef);
+        await deleteDoc(followingRef);
+        setFollowersCount(prev => prev - 1);
+      } else {
+        await setDoc(followerRef, {
+          timestamp: new Date().toISOString()
+        });
+        await setDoc(followingRef, {
+          timestamp: new Date().toISOString()
+        });
+        setFollowersCount(prev => prev + 1);
+      }
+      setIsFollowing(!isFollowing);
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -119,21 +166,49 @@ const Channel = () => {
               {/* Profile Picture */}
               <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-900 bg-white dark:bg-gray-800">
                 <img
-                  src={channel.logoUrl || '/default-avatar.png'}
-                  alt={channel.name}
+                  src={channel?.logoUrl || '/default-avatar.png'}
+                  alt={channel?.name}
                   className="w-full h-full object-cover"
                 />
               </div>
               
               {/* Channel Info */}
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {channel.name}
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-2">@{channel.handle}</p>
-                <p className="text-gray-700 dark:text-gray-300 max-w-2xl">
-                  {channel.description}
-                </p>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                      {channel?.name}
+                    </h1>
+                    <p className="text-gray-600 dark:text-gray-400 mb-2">@{channel?.handle}</p>
+                    <p className="text-gray-700 dark:text-gray-300 max-w-2xl mb-4">
+                      {channel?.description}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">{followersCount} followers</p>
+                  </div>
+                  {user && channel?.id !== user.uid && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleFollowToggle}
+                        disabled={followLoading}
+                        className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${isFollowing ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600' : 'bg-blue-600 text-white hover:bg-blue-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {followLoading ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          </div>
+                        ) : isFollowing ? 'Following' : 'Follow'}
+                      </button>
+                      {isFollowing && (
+                        <button
+                          onClick={() => setShowChat(true)}
+                          className="px-6 py-2 rounded-full font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                        >
+                          Message
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -190,6 +265,14 @@ const Channel = () => {
           </div>
         </div>
       </div>
+      {showChat && (
+        <Chat
+          recipientId={channel.id || ''}
+          recipientName={channel.name}
+          isOpen={showChat}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 };

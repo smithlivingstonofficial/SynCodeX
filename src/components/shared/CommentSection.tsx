@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, Timestamp, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, Timestamp, deleteDoc, getDoc } from 'firebase/firestore';
 
 interface Comment {
   id: string;
@@ -22,6 +22,7 @@ const CommentSection = ({ projectId, isModal = false }: CommentSectionProps) => 
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState<string>('');
 
   useEffect(() => {
     if (!projectId) return;
@@ -110,13 +111,39 @@ const CommentSection = ({ projectId, isModal = false }: CommentSectionProps) => 
   };
 
   const handleDeleteComment = async (commentId: string, userId: string) => {
-    if (!auth.currentUser || auth.currentUser.uid !== userId) return;
+    if (!auth.currentUser) {
+      setError('Please sign in to delete comments');
+      return;
+    }
+    if (auth.currentUser.uid !== userId) {
+      setError('You can only delete your own comments');
+      return;
+    }
+    if (!projectId) {
+      setError('Invalid project reference');
+      return;
+    }
 
     try {
-      await deleteDoc(doc(db, `projects/${projectId}/comments`, commentId));
+      setError('');
+      setDeleteLoading(commentId);
+      const commentRef = doc(db, `projects/${projectId}/comments`, commentId);
+      const commentDoc = await getDoc(commentRef);
+
+      if (!commentDoc.exists()) {
+        throw new Error('Comment not found');
+      }
+
+      await deleteDoc(commentRef);
     } catch (err) {
       console.error('Error deleting comment:', err);
-      setError('Failed to delete comment');
+      setError(
+        err instanceof Error
+          ? `Error: ${err.message}`
+          : 'Failed to delete comment. Please try again.'
+      );
+    } finally {
+      setDeleteLoading('');
     }
   };
 
@@ -201,9 +228,14 @@ const CommentSection = ({ projectId, isModal = false }: CommentSectionProps) => 
                 {auth.currentUser?.uid === comment.userId && (
                   <button
                     onClick={() => handleDeleteComment(comment.id, comment.userId)}
-                    className="text-xs text-red-500 hover:text-red-600 transition-colors duration-200"
+                    disabled={deleteLoading === comment.id}
+                    className="text-xs text-red-500 hover:text-red-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
                   >
-                    Delete
+                    {deleteLoading === comment.id ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-red-500"></div>
+                    ) : (
+                      'Delete'
+                    )}
                   </button>
                 )}
               </div>

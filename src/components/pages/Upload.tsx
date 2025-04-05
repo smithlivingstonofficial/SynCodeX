@@ -5,11 +5,13 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
+import JSZip from 'jszip';
 
 const Upload = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [files, setFiles] = useState<FileList | null>(null);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
   const [projectData, setProjectData] = useState({
@@ -26,12 +28,42 @@ const Upload = () => {
     'Ruby', 'PHP', 'Swift', 'Kotlin', 'Go', 'Rust', 'Other'
   ];
 
+  const allowedFileTypes = [
+    '.js', '.ts', '.py', '.java', '.cpp', '.cs', '.rb', '.php', '.swift',
+    '.kt', '.go', '.rs', '.txt', '.json', '.xml', '.yaml', '.yml', '.md',
+    '.css', '.scss', '.html', '.jsx', '.tsx', '.vue', '.zip'
+  ];
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setProjectData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles) return;
+
+    // Validate file types
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      if (!allowedFileTypes.includes(extension)) {
+        setError(`File type ${extension} is not allowed`);
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        setError('File size should be less than 50MB');
+        return;
+      }
+    }
+
+    setFiles(selectedFiles);
+    setError('');
   };
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +94,42 @@ const Upload = () => {
     reader.readAsDataURL(file);
   };
 
+  const uploadFile = async (file: File, projectId: string, path: string = '') => {
+    const fileName = path ? `${path}/${file.name}` : file.name;
+    const storageRef = ref(storage, `projects/${projectId}/files/${fileName}`);
+    
+    const metadata = {
+      contentType: file.type || 'application/octet-stream',
+      customMetadata: {
+        projectId: projectId,
+        userId: auth.currentUser!.uid,
+        uploadedAt: new Date().toISOString(),
+        originalName: file.name
+      }
+    };
+
+    await uploadBytes(storageRef, file, metadata);
+    return fileName;
+  };
+
+  const processZipFile = async (zipFile: File, projectId: string): Promise<string[]> => {
+    const zip = new JSZip();
+    const content = await zipFile.arrayBuffer();
+    const zipContent = await zip.loadAsync(content);
+    const uploadedFiles: string[] = [];
+
+    for (const [relativePath, zipEntry] of Object.entries(zipContent.files)) {
+      if (!zipEntry.dir) {
+        const content = await zipEntry.async('blob');
+        const file = new File([content], zipEntry.name, { type: 'application/octet-stream' });
+        const fileName = await uploadFile(file, projectId, relativePath.split('/').slice(0, -1).join('/'));
+        uploadedFiles.push(fileName);
+      }
+    }
+
+    return uploadedFiles;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser) {
@@ -74,21 +142,28 @@ const Upload = () => {
       return;
     }
 
+    if (!files || files.length === 0) {
+      setError('Please select at least one file to upload');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
       let thumbnailUrl = '';
       let projectId = '';
+      let uploadedFiles: string[] = [];
+
+      // Create project document first
+      const projectRef = doc(collection(db, 'projects'));
+      projectId = projectRef.id;
+
+      // Handle thumbnail upload if present
       if (thumbnail) {
-        // Create a new document reference with auto-generated ID
-        const projectRef = doc(collection(db, 'projects'));
-        projectId = projectRef.id;
-        
         const fileName = `thumbnail_${thumbnail.name}`;
         const storageRef = ref(storage, `projects/${projectId}/thumbnail/${fileName}`);
         
-        // Add metadata
         const metadata = {
           contentType: thumbnail.type,
           customMetadata: {
@@ -99,33 +174,25 @@ const Upload = () => {
           }
         };
 
-        // Upload with metadata and handle potential errors
-        try {
-          const uploadResult = await uploadBytes(storageRef, thumbnail, metadata);
-          thumbnailUrl = await getDownloadURL(uploadResult.ref);
-        } catch (uploadError: any) {
-          console.error('Error uploading thumbnail:', uploadError);
-          if (uploadError.code === 'storage/unauthorized') {
-            throw new Error('You do not have permission to upload files');
-          } else if (uploadError.code === 'storage/canceled') {
-            throw new Error('Upload was canceled');
-          } else if (uploadError.code === 'storage/unknown') {
-            throw new Error('An unknown error occurred during upload');
-          } else {
-            throw new Error('Failed to upload thumbnail: ' + (uploadError.message || 'Unknown error'));
-          }
+        const uploadResult = await uploadBytes(storageRef, thumbnail, metadata);
+        thumbnailUrl = await getDownloadURL(uploadResult.ref);
+      }
+
+      // Handle file uploads
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.name.toLowerCase().endsWith('.zip')) {
+          const zipFiles = await processZipFile(file, projectId);
+          uploadedFiles = [...uploadedFiles, ...zipFiles];
+        } else {
+          const fileName = await uploadFile(file, projectId);
+          uploadedFiles.push(fileName);
         }
       }
 
       const tags = projectData.tags
         ? projectData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
         : [];
-
-      // If no thumbnail was uploaded, create a new document reference
-      if (!projectId) {
-        const projectRef = doc(collection(db, 'projects'));
-        projectId = projectRef.id;
-      }
 
       await setDoc(doc(db, 'projects', projectId), {
         projectId,
@@ -137,10 +204,10 @@ const Upload = () => {
         userId: auth.currentUser.uid,
         tags,
         likes: [],
-        thumbnailUrl
+        thumbnailUrl,
+        files: uploadedFiles
       });
 
-      // Navigate to home after successful upload
       navigate('/home');
     } catch (err: any) {
       console.error('Error uploading project:', err);
@@ -207,7 +274,46 @@ const Upload = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Thumbnail</label>
+                  <label htmlFor="files" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Files</label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 dark:border-gray-700/50 border-dashed rounded-xl">
+                    <div className="space-y-1 text-center">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                        <label htmlFor="files" className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                          <span>Upload files</span>
+                          <input
+                            id="files"
+                            name="files"
+                            type="file"
+                            multiple
+                            onChange={handleFileChange}
+                            accept={allowedFileTypes.join(',')}
+                            className="sr-only"
+                          />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Programming files or ZIP (up to 50MB)
+                      </p>
+                      {files && files.length > 0 && (
+                        <div className="mt-4 text-left">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Selected files:</p>
+                          <ul className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            {Array.from(files).map((file, index) => (
+                              <li key={index} className="truncate">{file.name}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Project Thumbnail (Optional)</label>
                   <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-200 dark:border-gray-700/50 border-dashed rounded-xl">
                     <div className="space-y-1 text-center">
                       {thumbnailPreview ? (
@@ -233,7 +339,7 @@ const Upload = () => {
                           </svg>
                           <div className="flex text-sm text-gray-600 dark:text-gray-400">
                             <label htmlFor="thumbnail" className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                              <span>Upload a file</span>
+                              <span>Upload a thumbnail</span>
                               <input
                                 id="thumbnail"
                                 name="thumbnail"

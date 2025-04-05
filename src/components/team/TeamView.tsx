@@ -6,6 +6,7 @@ import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 import TeamChat from './TeamChat';
 import MembersList from './MembersList';
+import InviteModal from './invite/InviteModal';
 
 interface TeamData {
   id: string;
@@ -33,6 +34,7 @@ const TeamView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showMembers, setShowMembers] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     const fetchTeamAndMembers = async () => {
@@ -154,27 +156,66 @@ const TeamView = () => {
       <Navbar />
       <Sidebar />
       <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
-        <div className="h-[calc(100vh-3.5rem)] flex flex-col">
-          {/* Team Header */}
-          <div 
-            className="bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/30 p-4 flex items-center space-x-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800/50 transition-colors"
-            onClick={() => setShowMembers(!showMembers)}
-          >
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
-              {team.profileUrl ? (
-                <img
-                  src={team.profileUrl}
-                  alt={team.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
+        <div className="h-[calc(100vh-3.5rem)] flex">
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col overflow-hidden border-r border-gray-200 dark:border-gray-700/30">
+            {/* Team Header */}
+            <div className="flex-shrink-0 bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/30 p-4 flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
+                {team.profileUrl ? (
+                  <img
+                    src={team.profileUrl}
+                    alt={team.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                  {team.name}
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  {Object.keys(team.members).length} members
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
+                  onClick={() => navigate(`/teams/${teamId}/meet`)}
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+                <button
+                  className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
+                  onClick={() => setShowInviteModal(true)}
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+                <button
+                  className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
+                  onClick={() => setShowMembers(!showMembers)}
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -182,74 +223,29 @@ const TeamView = () => {
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                     />
                   </svg>
-                </div>
-              )}
+                </button>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                {team.name}
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                {Object.keys(team.members).length} members
-              </p>
-            </div>
-            <button
-              className="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/teams/${team.id}/meet`);
-              }}
-            >
-              <svg
-                className="w-6 h-6 text-gray-600 dark:text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            </button>
-            <button
-              className="p-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/teams/${team.id}/editor`);
-              }}
-            >
-              <svg
-                className="w-6 h-6 text-gray-600 dark:text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
-                />
-              </svg>
-            </button>
+
+            {/* Chat Area */}
+            <TeamChat teamId={teamId!} />
           </div>
 
-          {/* Chat Area */}
-          <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900/20 flex">
-            <div className="flex-1">
-              <TeamChat teamId={team.id} />
+          {/* Members Sidebar */}
+          {showMembers && (
+            <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700/30 bg-white dark:bg-gray-900/40 backdrop-blur-xl">
+              <MembersList teamId={teamId!} members={members} />
             </div>
-            {/* Members List */}
-            <MembersList
-              members={members}
-              isOpen={showMembers}
-              onClose={() => setShowMembers(false)}
-              teamId={team.id}
+          )}
+
+          {/* Invite Modal */}
+          {showInviteModal && (
+            <InviteModal
+              teamId={teamId!}
+              teamName={team.name}
+              onClose={() => setShowInviteModal(false)}
             />
-          </div>
+          )}
         </div>
       </div>
     </div>

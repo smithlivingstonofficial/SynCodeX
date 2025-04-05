@@ -16,9 +16,13 @@ import TeamView from './components/team/TeamView';
 import Meet from './components/meet/Meet';
 import TeamEditor from './components/team/editor/TeamEditor';
 import Community from './components/community/Community';
-import BlogPost from './components/community/BlogPost';
-import Question from './components/community/Question';
 import Dashboard from './components/pages/Dashboard';
+// import NewBlog from './components/community/NewBlog';
+import AskQuestion from './components/community/AskQuestion';
+import QuestionList from './components/community/QuestionList';
+import SearchResults from './components/pages/SearchResults';
+import Followers from './components/followers/Followers';
+
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -70,8 +74,11 @@ function App() {
         <Route path="/teams/:teamId/editor" element={user ? <TeamEditor /> : <Login />} />
 
         <Route path="/community" element={user ? <Community /> : <Login />} />
-        <Route path="/community/new-blog" element={user ? <BlogPost /> : <Login />} />
-        <Route path="/community/ask-question" element={user ? <Question /> : <Login />} />
+        {/* <Route path="/community/new-blog" element={user ? <NewBlog /> : <Login />} /> */}
+        <Route path="/community/questions" element={user ? <QuestionList /> : <Login />} />
+        <Route path="/community/ask-question" element={user ? <AskQuestion /> : <Login />} />
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/followers" element={<Followers />} />
       </Routes>
     </Router>
   );

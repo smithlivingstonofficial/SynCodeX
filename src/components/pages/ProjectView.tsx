@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { auth, db } from '../../firebase';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { auth, db, storage } from '../../firebase';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
+import { ref, getDownloadURL } from 'firebase/storage';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
 import CommentSection from '../shared/CommentSection';
 import { useProjectViews } from '../../hooks/useProjectViews';
+import { useAuth } from '../../hooks/useAuth';
 
 interface ProjectData {
   projectId: string;
@@ -18,12 +20,15 @@ interface ProjectData {
   visibility: string;
   tags: string[];
   likes?: string[];
+  sourceCodeUrl?: string;
 }
 
 interface ChannelData {
   name: string;
   handle: string;
+  description: string;
   logoUrl: string;
+  id?: string;
 }
 
 const ProjectView = () => {
@@ -37,6 +42,11 @@ const ProjectView = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [likeLoading, setLikeLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProjectAndChannel = async () => {
@@ -57,7 +67,18 @@ const ProjectView = () => {
 
         const channelDoc = await getDoc(doc(db, 'channels', projectData.userId));
         if (channelDoc.exists()) {
-          setChannel(channelDoc.data() as ChannelData);
+          const channelData = { ...channelDoc.data(), id: channelDoc.id } as ChannelData;
+          setChannel(channelData);
+
+          // Fetch followers count
+          const followersSnapshot = await getDocs(collection(db, `channels/${channelDoc.id}/followers`));
+          setFollowersCount(followersSnapshot.size);
+
+          // Check if current user is following
+          if (user) {
+            const followerDoc = await getDoc(doc(db, `channels/${channelDoc.id}/followers/${user.uid}`));
+            setIsFollowing(followerDoc.exists());
+          }
         }
       } catch (err) {
         console.error('Error fetching project:', err);
@@ -68,8 +89,36 @@ const ProjectView = () => {
     };
 
     fetchProjectAndChannel();
-  }, [projectId]);
+  }, [projectId, user]);
 
+  const handleFollowToggle = async () => {
+    if (!user || !channel?.id) return;
+
+    setFollowLoading(true);
+    try {
+      const followerRef = doc(db, `channels/${channel.id}/followers/${user.uid}`);
+      const followingRef = doc(db, `channels/${user.uid}/following/${channel.id}`);
+
+      if (isFollowing) {
+        await deleteDoc(followerRef);
+        await deleteDoc(followingRef);
+        setFollowersCount(prev => prev - 1);
+      } else {
+        await setDoc(followerRef, {
+          timestamp: new Date().toISOString()
+        });
+        await setDoc(followingRef, {
+          timestamp: new Date().toISOString()
+        });
+        setFollowersCount(prev => prev + 1);
+      }
+      setIsFollowing(!isFollowing);
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
   const handleLike = async () => {
     if (!auth.currentUser || !projectId || likeLoading) return;
 
@@ -94,6 +143,28 @@ const ProjectView = () => {
       console.error('Error updating like:', err);
     } finally {
       setLikeLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!project?.sourceCodeUrl || downloadLoading) return;
+
+    setDownloadLoading(true);
+    try {
+      const sourceCodeRef = ref(storage, project.sourceCodeUrl);
+      const downloadUrl = await getDownloadURL(sourceCodeRef);
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${project.title.toLowerCase().replace(/\s+/g, '-')}-source.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error downloading source code:', err);
+      alert('Failed to download source code');
+    } finally {
+      setDownloadLoading(false);
     }
   };
 
@@ -186,7 +257,7 @@ const ProjectView = () => {
                 </button>
                 {auth.currentUser?.uid === project.userId && (
                   <Link
-                    to={`/projects/${projectId}`}
+                    to={`/projects/${projectId}/edit`}
                     className="flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:scale-105 transition-all duration-200 w-full md:w-auto"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,6 +265,24 @@ const ProjectView = () => {
                     </svg>
                     <span>Edit</span>
                   </Link>
+                )}
+                {project.sourceCodeUrl && (
+                  <button
+                    onClick={handleDownload}
+                    disabled={downloadLoading}
+                    className="flex items-center justify-center space-x-2 px-4 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 hover:scale-105 transition-all duration-200 w-full md:w-auto disabled:opacity-50 disabled:hover:scale-100"
+                  >
+                    {downloadLoading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Download</span>
+                      </>
+                    )}
+                  </button>
                 )}
                 <button
                   onClick={() => setShowComments(true)}
@@ -216,7 +305,7 @@ const ProjectView = () => {
 
             {/* Channel Profile */}
             {channel && (
-              <div className="flex items-center space-x-3 md:space-x-4 p-3 md:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg md:rounded-xl mb-4 md:mb-6 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors cursor-pointer">
+              <div className="flex items-center space-x-3 md:space-x-4 p-3 md:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg md:rounded-xl mb-4 md:mb-6 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors">
                 <Link to={`/channel/${channel.handle}`} className="flex items-center space-x-3 md:space-x-4 flex-1">
                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden flex-shrink-0">
                     <img
@@ -229,8 +318,32 @@ const ProjectView = () => {
                     <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
                       {channel.name}
                     </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{followersCount} followers</p>
                   </div>
                 </Link>
+                {user && channel.id !== user.uid && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleFollowToggle}
+                      disabled={followLoading}
+                      className={`px-6 py-2 rounded-full font-medium transition-colors duration-200 ${isFollowing ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600' : 'bg-blue-600 text-white hover:bg-blue-700'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {followLoading ? (
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        </div>
+                      ) : isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                    {isFollowing && (
+                      <button
+                        onClick={() => setShowChat(true)}
+                        className="px-6 py-2 rounded-full font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+                      >
+                        Message
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
