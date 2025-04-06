@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase';
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
 import Sidebar from '../shared/Sidebar';
@@ -117,7 +117,7 @@ const Projects = () => {
                   to={`/projects/${project.projectId}`}
                   className="group bg-gray-100 dark:bg-gray-900/40 backdrop-blur-xl rounded-xl p-6 border border-gray-200 dark:border-gray-700/30 hover:bg-gray-200 dark:hover:bg-gray-800/50 transition-all duration-200 hover:shadow-lg relative"
                 >
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-4 right-4 flex space-x-2">
                     <Link
                       to={`/projects/${project.projectId}/edit`}
                       className="p-2 bg-gray-200 dark:bg-gray-800 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
@@ -127,6 +127,33 @@ const Projects = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </Link>
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!auth.currentUser) return;
+                        
+                        try {
+                          const userRef = doc(db, 'users', auth.currentUser.uid);
+                          const userDoc = await getDoc(userRef);
+                          const savedProjects = userDoc.data()?.savedProjects || [];
+                          const isSaved = savedProjects.includes(project.projectId);
+                          
+                          await updateDoc(userRef, {
+                            savedProjects: isSaved 
+                              ? arrayRemove(project.projectId)
+                              : arrayUnion(project.projectId)
+                          });
+                        } catch (err) {
+                          console.error('Error toggling save status:', err);
+                        }
+                      }}
+                      className="p-2 bg-gray-200 dark:bg-gray-800 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                      </svg>
+                    </button>
                   </div>
                   <div className="flex flex-col space-y-4">
                     {project.thumbnailUrl && (

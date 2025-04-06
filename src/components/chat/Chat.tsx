@@ -12,12 +12,13 @@ interface Message {
 }
 
 interface ChatProps {
-  receiverId: string;
-  receiverName: string;
+  recipientId: string;
+  recipientName: string;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-const Chat: React.FC<ChatProps> = ({ receiverId, receiverName, onClose }) => {
+const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -29,8 +30,8 @@ const Chat: React.FC<ChatProps> = ({ receiverId, receiverName, onClose }) => {
     const messagesRef = collection(db, 'messages');
     const q = query(
       messagesRef,
-      where('senderId', 'in', [auth.currentUser.uid, receiverId]),
-      where('receiverId', 'in', [auth.currentUser.uid, receiverId]),
+      where('senderId', 'in', [auth.currentUser.uid, recipientId]),
+      where('receiverId', 'in', [auth.currentUser.uid, recipientId]),
       orderBy('timestamp', 'asc')
     );
 
@@ -48,7 +49,7 @@ const Chat: React.FC<ChatProps> = ({ receiverId, receiverName, onClose }) => {
     });
 
     return () => unsubscribe();
-  }, [receiverId]);
+  }, [recipientId]);
 
   const sendMessage = async () => {
     if (!auth.currentUser || !newMessage.trim()) return;
@@ -57,7 +58,7 @@ const Chat: React.FC<ChatProps> = ({ receiverId, receiverName, onClose }) => {
       const messagesRef = collection(db, 'messages');
       await addDoc(messagesRef, {
         senderId: auth.currentUser.uid,
-        receiverId,
+        receiverId: recipientId,
         content: newMessage.trim(),
         timestamp: Timestamp.now(),
         read: false
@@ -69,10 +70,10 @@ const Chat: React.FC<ChatProps> = ({ receiverId, receiverName, onClose }) => {
     }
   };
 
-  return (
+  return isOpen ? (
     <div className="fixed bottom-4 right-4 w-80 bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
       <div className="p-4 bg-gray-100 dark:bg-gray-800 flex justify-between items-center">
-        <h3 className="font-medium text-gray-900 dark:text-white">{receiverName}</h3>
+        <h3 className="font-medium text-gray-900 dark:text-white">{recipientName}</h3>
         <button
           onClick={onClose}
           className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -135,7 +136,7 @@ const Chat: React.FC<ChatProps> = ({ receiverId, receiverName, onClose }) => {
         </div>
       </div>
     </div>
-  );
+  ) : null;
 };
 
 export default Chat;

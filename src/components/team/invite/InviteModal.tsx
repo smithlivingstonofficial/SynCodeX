@@ -189,7 +189,7 @@ const InviteModal: React.FC<InviteModalProps> = ({ teamId, teamName, onClose }) 
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {emailInputs.map((input, index) => (
+          {emailInputs.map((input) => (
             <div key={input.id} className="flex items-center space-x-2">
               <div className="flex-1 relative">
                 <input

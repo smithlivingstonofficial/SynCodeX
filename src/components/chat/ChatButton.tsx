@@ -33,8 +33,9 @@ const ChatButton: React.FC<ChatButtonProps> = ({ receiverId, receiverName }) => 
 
       {isChatOpen && (
         <Chat
-          receiverId={receiverId}
-          receiverName={receiverName}
+          recipientId={receiverId}
+          recipientName={receiverName}
+          isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
         />
       )}

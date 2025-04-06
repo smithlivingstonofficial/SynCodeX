@@ -235,23 +235,18 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.invitedBy == request.auth.uid;
     }
 
-    // Community questions collection rules
-    match /communities/questions/{questionId} {
+    // Questions collection rules
+    match /questions/{questionId} {
       allow read: if true;
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && 
-        (resource.data.authorId == request.auth.uid || 
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes', 'views', 'answers']));
+      allow update: if isAuthenticated() && (resource.data.authorId == request.auth.uid);
       allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
 
       // Answers subcollection
       match /answers/{answerId} {
         allow read: if true;
         allow create: if isAuthenticated();
-        allow update: if isAuthenticated() && 
-          (resource.data.authorId == request.auth.uid || 
-           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']));
-        allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
       }
     }
 

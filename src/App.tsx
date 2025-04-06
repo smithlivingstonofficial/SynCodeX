@@ -22,6 +22,7 @@ import AskQuestion from './components/community/AskQuestion';
 import QuestionList from './components/community/QuestionList';
 import SearchResults from './components/pages/SearchResults';
 import Followers from './components/followers/Followers';
+import QuestionDetail from './components/community/QuestionDetail';
 
 
 function App() {
@@ -76,6 +77,7 @@ function App() {
         <Route path="/community" element={user ? <Community /> : <Login />} />
         {/* <Route path="/community/new-blog" element={user ? <NewBlog /> : <Login />} /> */}
         <Route path="/community/questions" element={user ? <QuestionList /> : <Login />} />
+        <Route path="/community/questions/:questionId" element={user ? <QuestionDetail /> : <Login />} />
         <Route path="/community/ask-question" element={user ? <AskQuestion /> : <Login />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/followers" element={<Followers />} />

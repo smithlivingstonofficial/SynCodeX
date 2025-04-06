@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface TeamMember {
   id: string;
@@ -9,6 +9,7 @@ interface TeamMember {
 }
 
 interface MembersListProps {
+  teamId: string;
   members: TeamMember[];
 }
 

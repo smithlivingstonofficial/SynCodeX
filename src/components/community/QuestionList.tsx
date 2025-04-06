@@ -65,7 +65,7 @@ const QuestionList = () => {
               {question.title}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-              {question.content}
+              {question.content.replace(/<[^>]*>/g, '')}
             </p>
             <div className="flex flex-wrap gap-2">
               {question.tags.map((tag) => (
@@ -86,7 +86,7 @@ const QuestionList = () => {
               <div className="flex items-center space-x-2">
                 <span>Asked by {question.authorName}</span>
                 <span>•</span>
-                <span>{new Date(question.createdAt).toLocaleDateString()}</span>
+                <span>{new Date(question.createdAt).toLocaleString()}</span>
               </div>
             </div>
           </Link>

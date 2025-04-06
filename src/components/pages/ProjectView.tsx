@@ -46,6 +46,7 @@ const ProjectView = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {

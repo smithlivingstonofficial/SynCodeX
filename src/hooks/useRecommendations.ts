@@ -64,7 +64,7 @@ export const useRecommendations = () => {
           querySnapshot.docs.map(async (doc) => {
             const data = doc.data();
             const channelDoc = await getDoc(doc(db, 'channels', data.userId));
-            const channelData = channelDoc.exists() ? channelDoc.data() : {};
+            const channelData = channelDoc.exists() ? channelDoc.data() : undefined;
 
             return {
               id: doc.id,
@@ -116,7 +116,7 @@ export const useRecommendations = () => {
             const data = doc.data();
             try {
               const channelDoc = await getDoc(doc(db, 'channels', data.userId));
-              const channelData = channelDoc.exists() ? channelDoc.data() : {};
+              const channelData = channelDoc.exists() ? channelDoc.data() : undefined;
 
               return {
                 id: doc.id,
@@ -160,16 +160,18 @@ export const useRecommendations = () => {
 
             const data = projectDoc.data();
             const channelDoc = await getDoc(doc(db, 'channels', data.userId));
-            const channelData = channelDoc.exists() ? channelDoc.data() : {};
+            const channelData = channelDoc.exists() ? channelDoc.data() : undefined;
 
             return {
-              ...project,
-              channel: {
-                name: channelData.name || '',
-                handle: channelData.handle || '',
-                logoUrl: channelData.logoUrl || ''
-              }
-            };
+              id: projectDoc.id,
+              ...data,
+              createdAt: data.createdAt?.toDate() || new Date(),
+              channel: channelData ? {
+                name: channelData.name,
+                handle: channelData.handle,
+                logoUrl: channelData.logoUrl
+              } : undefined
+            } as Project;
           })
         );
 
