@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../hooks/useAuth';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import Navbar from '../shared/Navbar';
+import Sidebar from '../shared/Sidebar';
 
 interface Answer {
   id: string;
@@ -41,15 +43,24 @@ const QuestionDetail = () => {
   const [newAnswer, setNewAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authorProfile, setAuthorProfile] = useState<any>(null);
 
   useEffect(() => {
-    const fetchQuestion = async () => {
+    const fetchQuestionAndAuthor = async () => {
       if (!questionId) return;
 
       try {
         const questionDoc = await getDoc(doc(db, 'questions', questionId));
         if (questionDoc.exists()) {
-          setQuestion({ id: questionDoc.id, ...questionDoc.data() } as Question);
+          const questionData = { id: questionDoc.id, ...questionDoc.data() } as Question;
+          setQuestion(questionData);
+
+          // Fetch author profile
+          const authorDoc = await getDoc(doc(db, 'channels', questionData.authorId));
+          if (authorDoc.exists()) {
+            setAuthorProfile({ ...authorDoc.data(), id: authorDoc.id });
+          }
+
           // Increment view count
           await updateDoc(doc(db, 'questions', questionId), {
             views: increment(1)
@@ -62,7 +73,7 @@ const QuestionDetail = () => {
       }
     };
 
-    fetchQuestion();
+    fetchQuestionAndAuthor();
 
     // Subscribe to answers
     if (questionId) {
@@ -181,16 +192,28 @@ const QuestionDetail = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <Navbar />
+        <Sidebar />
+        <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!question) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        Question not found
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <Navbar />
+        <Sidebar />
+        <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            Question not found
+          </div>
+        </div>
       </div>
     );
   }
@@ -199,92 +222,77 @@ const QuestionDetail = () => {
   const hasVoted = user && question.votes?.includes(user.uid);
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* Question */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-        <div className="flex justify-between items-start mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{question.title}</h1>
-          <button
-            onClick={handleBookmark}
-            className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}
-            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this question'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill={isBookmarked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          {question.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="prose dark:prose-invert max-w-none mb-6" dangerouslySetInnerHTML={{ __html: question.content }} />
-
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
+      <Navbar />
+      <Sidebar />
+      <div className="pl-[var(--sidebar-width)] pt-14 transition-[padding] duration-200">
+        <div className="max-w-4xl mx-auto p-6 space-y-8">
+          {/* Question */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{question.title}</h1>
               <button
-                onClick={() => handleVoteQuestion('upvote')}
-                className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVoted && question.upvotes > 0 ? 'text-green-500' : ''}`}
-                title="Upvote"
+                onClick={handleBookmark}
+                className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 ${isBookmarked ? 'text-yellow-500' : 'text-gray-400'}`}
+                title={isBookmarked ? 'Remove bookmark' : 'Bookmark this question'}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <span>{question.upvotes - question.downvotes}</span>
-              <button
-                onClick={() => handleVoteQuestion('downvote')}
-                className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVoted && question.downvotes > 0 ? 'text-red-500' : ''}`}
-                title="Downvote"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill={isBookmarked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
               </button>
             </div>
-            <span>{question.views} views</span>
-            <span>{question.answersCount} answers</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span>Asked by {question.authorName}</span>
-            <span>•</span>
-            <span>{new Date(question.createdAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Answers */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{answers.length} Answers</h2>
-        {answers.map((answer) => {
-          const hasVotedAnswer = user && answer.votes?.includes(user.uid);
-          return (
-            <div key={answer.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="prose dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: answer.content }} />
-              <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+            {/* Author Info */}
+            {authorProfile && (
+              <Link
+                to={`/channel/${authorProfile.handle}`}
+                className="flex items-center space-x-3 mb-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition-colors"
+              >
+                <img
+                  src={authorProfile.logoUrl || '/default-avatar.png'}
+                  alt={authorProfile.name}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                    {authorProfile.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    @{authorProfile.handle}
+                  </p>
+                </div>
+              </Link>
+            )}
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              {question.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            <div className="prose dark:prose-invert max-w-none mb-6" dangerouslySetInnerHTML={{ __html: question.content }} />
+
+            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => handleVoteAnswer(answer.id, 'upvote')}
-                    className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVotedAnswer && answer.upvotes > 0 ? 'text-green-500' : ''}`}
+                    onClick={() => handleVoteQuestion('upvote')}
+                    className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVoted && question.upvotes > 0 ? 'text-green-500' : ''}`}
                     title="Upvote"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
                     </svg>
                   </button>
-                  <span>{answer.upvotes - answer.downvotes}</span>
+                  <span>{question.upvotes - question.downvotes}</span>
                   <button
-                    onClick={() => handleVoteAnswer(answer.id, 'downvote')}
-                    className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVotedAnswer && answer.downvotes > 0 ? 'text-red-500' : ''}`}
+                    onClick={() => handleVoteQuestion('downvote')}
+                    className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVoted && question.downvotes > 0 ? 'text-red-500' : ''}`}
                     title="Downvote"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -292,56 +300,99 @@ const QuestionDetail = () => {
                     </svg>
                   </button>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span>Answered by {answer.authorName}</span>
-                  <span>•</span>
-                  <span>{new Date(answer.createdAt).toLocaleDateString()}</span>
-                </div>
+                <span>{question.views} views</span>
+                <span>{question.answersCount} answers</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span>Asked by {question.authorName}</span>
+                <span>•</span>
+                <span>{new Date(question.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Answer Form */}
-      {user && (
-        <form onSubmit={handleSubmitAnswer} className="space-y-4">
-          <div>
-            <label htmlFor="answer" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Your Answer
-            </label>
-            <ReactQuill
-              value={newAnswer}
-              onChange={setNewAnswer}
-              className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden"
-              theme="snow"
-              modules={{
-                toolbar: [
-                  [{ 'header': [1, 2, false] }],
-                  ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'],
-                  [{'list': 'ordered'}, {'list': 'bullet'}],
-                  ['link', 'image'],
-                  ['clean']
-                ],
-              }}
-              formats={[
-                'header',
-                'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block',
-                'list', 'bullet',
-                'link', 'image'
-              ]}
-              placeholder="Write your answer here..."
-            />
           </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Posting...' : 'Post Answer'}
-          </button>
-        </form>
-      )}
+
+          {/* Answers */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{answers.length} Answers</h2>
+            {answers.map((answer) => {
+              const hasVotedAnswer = user && answer.votes?.includes(user.uid);
+              return (
+                <div key={answer.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                  <div className="prose dark:prose-invert max-w-none mb-4" dangerouslySetInnerHTML={{ __html: answer.content }} />
+                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleVoteAnswer(answer.id, 'upvote')}
+                        className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVotedAnswer && answer.upvotes > 0 ? 'text-green-500' : ''}`}
+                        title="Upvote"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <span>{answer.upvotes - answer.downvotes}</span>
+                      <button
+                        onClick={() => handleVoteAnswer(answer.id, 'downvote')}
+                        className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${hasVotedAnswer && answer.downvotes > 0 ? 'text-red-500' : ''}`}
+                        title="Downvote"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span>Answered by {answer.authorName}</span>
+                      <span>•</span>
+                      <span>{new Date(answer.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Answer Form */}
+          {user && (
+            <form onSubmit={handleSubmitAnswer} className="space-y-4">
+              <div>
+                <label htmlFor="answer" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Your Answer
+                </label>
+                <ReactQuill
+                  value={newAnswer}
+                  onChange={setNewAnswer}
+                  className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden"
+                  theme="snow"
+                  modules={{
+                    toolbar: [
+                      [{ 'header': [1, 2, false] }],
+                      ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'],
+                      [{'list': 'ordered'}, {'list': 'bullet'}],
+                      ['link', 'image'],
+                      ['clean']
+                    ],
+                  }}
+                  formats={[
+                    'header',
+                    'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block',
+                    'list', 'bullet',
+                    'link', 'image'
+                  ]}
+                  placeholder="Write your answer here..."
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Posting...' : 'Post Answer'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
