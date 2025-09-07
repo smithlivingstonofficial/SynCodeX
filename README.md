@@ -95,7 +95,7 @@ Copy .env.example to .env and update values.
 
 5. **Run locally**
 npm run dev
-# open http://localhost:5173 (or port shown)
+open http://localhost:5173 (or port shown)
 
 6. **Build**
 npm run build
